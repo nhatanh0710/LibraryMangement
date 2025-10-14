@@ -19,7 +19,7 @@ const run = async () => {
       msnv: "admin",
       hoTenNV: "Administrator",
       password: hash,
-      chucVu: "ADMIN",
+      chucVu: "GIÁM ĐỐC",
     });
     console.log("Created admin: msnv=admin, password=admin123");
     process.exit(0);

@@ -88,10 +88,53 @@ export const updateTheoDoiMuonSach = asyncHandler(async (req, res) => {
 
 // DELETE /api/theodoimuonsach/:id - Xoá theo dõi mượn sách
 export const deleteTheoDoiMuonSach = asyncHandler(async (req, res) => {
-  const item = await TheoDoiMuonSach.findByIdAndDelete(req.params.id); // Tìm theo ID và xoá
-  if (!item)
+  const id = req.params.id;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ success: false, message: "ID không hợp lệ" });
+  }
+
+  const theoDoi = await TheoDoiMuonSach.findById(id);
+  if (!theoDoi) {
     return res
       .status(404)
-      .json({ success: false, message: "TheoDoiMuonSach không tồn tại" });
-  res.json({ success: true, message: "Xoá TheoDoiMuonSach thành công" });
+      .json({ success: false, message: "Không tìm thấy phiếu mượn" });
+  }
+  // Nếu là ĐỘC GIẢ
+  if (req.userType === "DOCGIA") {
+    // chỉ xóa phiếu của chính họ
+    if (theoDoi.maDocGia.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Bạn không có quyền xóa phiếu này" });
+    }
+    // chỉ cho xóa khi trạng thái là CHỜ DUYỆT
+    if (theoDoi.trangThai !== "CHỜ DUYỆT") {
+      return res.status(400).json({
+        success: false,
+        message: "Bạn chỉ có thể xóa khi phiếu ở trạng thái 'CHỜ DUYỆT'",
+      });
+    }
+  }
+
+  // Nếu là NHÂN VIÊN
+  else if (req.userType === "NHANVIEN") {
+    // chỉ cho xóa khi trạng thái là ĐÃ TRẢ
+    if (theoDoi.trangThai !== "ĐÃ TRẢ") {
+      return res.status(400).json({
+        success: false,
+        message: "Nhân viên chỉ được xóa khi phiếu ở trạng thái 'ĐÃ TRẢ'",
+      });
+    }
+  }
+
+  // Các loại người dùng khác thì cấm xóa
+  else {
+    return res
+      .status(403)
+      .json({ success: false, message: "Không có quyền thực hiện" });
+  }
+  // Xóa phiếu mượn
+  await TheoDoiMuonSach.findByIdAndDelete(id);
+  res.json({ success: true, message: "Xóa phiếu mượn thành công" });
 });

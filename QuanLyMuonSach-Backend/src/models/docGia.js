@@ -10,6 +10,7 @@ const docGiaSchema = new mongoose.Schema(
     phai: { type: String, enum: ["Nam", "Nữ", "Khác"], default: "Khác" },
     diaChi: { type: String },
     dienThoai: { type: String },
+    password: { type: String, required: false },
   },
   {
     timestamps: true, // tự động thêm createdAt, updatedAt

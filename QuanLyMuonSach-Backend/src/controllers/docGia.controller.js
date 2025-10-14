@@ -1,8 +1,75 @@
 // src/controllers/docGiaController.js
-import asyncHandler from "express-async-handler"; 
-import DocGia from "../models/DocGia.js"; 
+import asyncHandler from "express-async-handler";
+import DocGia from "../models/DocGia.js";
+import theoDoiMuonSach from "../models/theoDoiMuonSach.js";
 
+// Tạo token helper
+const createToken = (id, type) => {
+  return jwt.sign({ id, type }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
 
+// POST /api/docgia/register
+export const registerDocGia = asyncHandler(async (req, res) => {
+  const { maDocGia, hoLot, ten, dienThoai, password } = req.body;
+  if (!maDocGia || !hoLot || !ten || !password) {
+    res.status(400);
+    throw new Error("Vui lòng cung cấp maDocGia, hoLot, ten và password");
+  }
+  const exists = await DocGia.findOne({ maDocGia });
+  if (exists) {
+    res.status(400);
+    throw new Error("maDocGia đã tồn tại");
+  }
+  const salt = await bcrypt.genSalt(10);
+  const hashed = await bcrypt.hash(password, salt);
+
+  const docGia = await DocGia.create({
+    maDocGia,
+    hoLot,
+    ten,
+    dienThoai,
+    password: hashed,
+  });
+
+  res.status(201).json({
+    _id: docGia._id,
+    maDocGia: docGia.maDocGia,
+    hoLot: docGia.hoLot,
+    ten: docGia.ten,
+    token: createToken(docGia._id, "DOCGIA"),
+  });
+});
+
+// POST /api/docgia/login
+export const loginDocGia = asyncHandler(async (req, res) => {
+  const { maDocGia, password } = req.body;
+  if (!maDocGia || !password) {
+    res.status(400);
+    throw new Error("Cần maDocGia và password");
+  }
+  const user = await DocGia.findOne({ maDocGia });
+  if (!user) {
+    res.status(401);
+    throw new Error("Tài khoản không tồn tại");
+  }
+  if (!user.password) {
+    res.status(401);
+    throw new Error("Tài khoản chưa có mật khẩu, vui lòng liên hệ thư viện");
+  }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    res.status(401);
+    throw new Error("Mật khẩu không đúng");
+  }
+
+  res.json({
+    _id: user._id,
+    maDocGia: user.maDocGia,
+    hoLot: user.hoLot,
+    ten: user.ten,
+    token: createToken(user._id, "DOCGIA"),
+  });
+});
 /**
  GET /api/docgia - Lấy danh sách độc giả (có hỗ trợ tìm kiếm và phân trang)
  */
@@ -115,6 +182,16 @@ export const deleteDocGia = asyncHandler(async (req, res) => {
     return res
       .status(404)
       .json({ success: false, message: "DocGia not found" });
-
+  //Kiểm tra độc giả có đang mượn sách không
+  const hasBorrowed = await theoDoiMuonSach.findOne({
+    maDocGia: req.params.id,
+    trangThai: "ĐÃ DUYỆT",
+  });
+  if (hasBorrowed) {
+    return res.status(400).json({
+      success: false,
+      message: "Không thể xoá độc giả đang có sách mượn",
+    });
+  }
   res.json({ success: true, message: "Deleted" });
 });

@@ -43,9 +43,28 @@ export const getSachById = asyncHandler(async (req, res) => {
 
 // POST /api/sach - Thêm mới sách
 export const createSach = asyncHandler(async (req, res) => {
-  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, tacGia, moTa } =
-    req.body;
-  if (!maSach || !tenSach || !donGia || !soQuyen || !maNXB || !tacGia) {
+  const {
+    maSach,
+    tenSach,
+    donGia,
+    soQuyen,
+    namXuatBan,
+    maNXB,
+    tacGia,
+    moTa,
+    hinhAnh,
+  } = req.body;
+  if (
+    !maSach ||
+    !tenSach ||
+    !donGia ||
+    !soQuyen ||
+    !maNXB ||
+    !tacGia ||
+    !namXuatBan ||
+    !hinhAnh ||
+    !moTa
+  ) {
     return res
       .status(400)
       .json({ success: false, message: "Thiếu thông tin bắt buộc" });
@@ -65,6 +84,7 @@ export const createSach = asyncHandler(async (req, res) => {
     maNXB,
     tacGia,
     moTa,
+    hinhAnh,
   });
   await newSach.save();
   res.status(201).json({ success: true, data: newSach });
@@ -77,8 +97,17 @@ export const updateSach = asyncHandler(async (req, res) => {
     return res
       .status(404)
       .json({ success: false, message: "Sach không tồn tại" });
-  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, tacGia, moTa } =
-    req.body;
+  const {
+    maSach,
+    tenSach,
+    donGia,
+    soQuyen,
+    namXuatBan,
+    maNXB,
+    tacGia,
+    moTa,
+    hinhAnh,
+  } = req.body;
   if (maSach && maSach !== item.maSach) {
     const existingSach = await Sach.findOne({ maSach });
     if (existingSach)
@@ -98,6 +127,7 @@ export const updateSach = asyncHandler(async (req, res) => {
   if (maNXB) item.maNXB = maNXB;
   if (tacGia) item.tacGia = tacGia;
   if (moTa) item.moTa = moTa;
+  if (hinhAnh) item.hinhAnh = hinhAnh;
   await item.save();
   res.json({ success: true, data: item });
 });
@@ -119,4 +149,3 @@ export const deleteSach = asyncHandler(async (req, res) => {
   await item.remove();
   res.json({ success: true, message: "Xoá sách thành công" });
 });
-

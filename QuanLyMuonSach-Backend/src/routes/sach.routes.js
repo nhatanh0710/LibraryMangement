@@ -1,8 +1,5 @@
 import express from "express";
-import {
-  protect,
-  authorizeRole,
-} from "../middlewares/nhanVien.middleware.js";
+import { protect, authorizeRole } from "../middlewares/nhanVien.middleware.js";
 import {
   getTheoDoiMuonSachs,
   getTheoDoiMuonSachById,
@@ -13,14 +10,24 @@ import {
 
 const router = express.Router();
 
-router.get("/", protect, getTheoDoiMuonSachs);
-router.get("/:id", protect, getTheoDoiMuonSachById);
-router.post("/", protect, createTheoDoiMuonSach);
+router.get("/", getTheoDoiMuonSachs);
+router.get("/:id", getTheoDoiMuonSachById);
+router.post(
+  "/",
+  protect,
+  authorizeRole("GIÁM ĐỐC", "NHÂN VIÊN"),
+  createTheoDoiMuonSach
+);
 router.put(
   "/:id",
   protect,
   authorizeRole("GIÁM ĐỐC", "NHÂN VIÊN"),
   updateTheoDoiMuonSach
 );
-router.delete("/:id", protect, deleteTheoDoiMuonSach);
+router.delete(
+  "/:id",
+  protect,
+  authorizeRole("GIÁM ĐỐC", "NHÂN VIÊN"),
+  deleteTheoDoiMuonSach
+);
 export default router;

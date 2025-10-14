@@ -1,5 +1,5 @@
 import express from "express";
-import { protect, authorizeAdmin } from "../middleware/nhanVien.middleware.js";
+import { protect, authorizeRole } from "../middlewares/nhanVien.middleware.js";
 import {
   getNXB,
   getNXBById,
@@ -10,12 +10,10 @@ import {
 
 const router = express.Router();
 
-// Mọi route con bắt đầu bằng /nxb sẽ vào nxbRoutes
-
-router.use("/", protect, getNXB);
-router.use("/:id", protect, getNXBById);
-router.use("/", protect, authorizeAdmin, createNXB);
-router.use("/:id", protect, authorizeAdmin, updateNXB);
-router.use("/:id", protect, authorizeAdmin, deleteNXB);
+router.get("/", getNXB);
+router.get("/:id", getNXBById);
+router.post("/", protect, createNXB);
+router.put("/:id", protect, updateNXB);
+router.delete("/:id", protect, authorizeRole("GIÁM ĐỐC"), deleteNXB);
 
 export default router;

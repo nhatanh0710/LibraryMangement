@@ -67,7 +67,7 @@ export const registerNhanVien = asyncHandler(async (req, res) => {
 
   // Tạo mới nhân viên
   const newNV = await NhanVien.create({
-    mvnv,
+    msnv,
     hoTenNV,
     password: hashedPassword,
     chucVu,
@@ -131,7 +131,20 @@ export const updateNhanVien = asyncHandler(async (req, res) => {
   res.json({ success: true, data: item }); // Nếu có -> trả dữ liệu
 });
 
+//DELETE /api/nhanvien/:id - Xoá nhân viên mềm (Chỉ thay đổi trạng thái thành BLOCKED)\
+export const softDeleteNhanVien = asyncHandler(async (req, res) => {
+  const item = await NhanVien.findById(req.params.id);
+  if (!item)
+    return res
+      .status(404)
+      .json({ success: false, message: "NhanVien không tồn tại" });
+  item.trangThai = "BLOCKED";
+  await item.save();
+  res.json({ success: true, message: "Khóa NhanVien thành công" });
+});
+
 //DELETE /api/nhanvien/:id - Xoá nhân viên
+//Chỉ xóa khi nhân viên không có liên quan đến nghiệp vụ khác
 export const deleteNhanVien = asyncHandler(async (req, res) => {
   const item = await NhanVien.findByIdAndDelete(req.params.id); // Tìm nhân viên theo ID
   if (!item)

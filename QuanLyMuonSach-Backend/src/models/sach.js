@@ -15,6 +15,7 @@ const sachSchema = new mongoose.Schema(
     tacGia: { type: String, required: true },
     soQuyenConLai: { type: Number, required: true, default: 1 },
     moTa: { type: String },
+    hinhAnh: { type: String },
 },
   { timestamps: true }
 );
