@@ -65,7 +65,7 @@ export const createNXB = asyncHandler(async (req, res) => {
 
 //PUT /api/nxb/:id ( admin )- Cập nhật thông tin nhà xuất bản
 export const updateNXB = asyncHandler(async (req, res) => {
-  const item = await NhaXuatBan.findByIdAndUpdate(req.params.id); // Tìm NXB theo ID
+  const item = await NhaXuatBan.findByIdAndUpdate(req.params.id, req.body, {new: true , runValidators: true}); // Tìm NXB theo ID
   if (!item)
     return res
       .status(404)
