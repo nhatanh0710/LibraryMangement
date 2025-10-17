@@ -1,0 +1,94 @@
+@import './variables.css';
+
+/* ===== RESET & FONT ===== */
+html,
+body,
+#app {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-main);
+    background-color: var(--background-light);
+    color: var(--text-dark);
+}
+
+/* ===== LINK ===== */
+a {
+    color: var(--primary-700);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: var(--primary-900);
+    text-decoration: underline;
+}
+
+/* ===== FORM ===== */
+input,
+select,
+textarea {
+    border-radius: var(--radius);
+}
+
+.form-control:focus {
+    border-color: var(--primary-700);
+    box-shadow: 0 0 0 0.2rem rgba(17, 100, 102, 0.15);
+}
+
+/* ===== BUTTONS ===== */
+.btn-primary {
+    background-color: var(--primary-700);
+    border-color: var(--primary-700);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-900);
+    border-color: var(--primary-900);
+}
+
+.btn-success {
+    background-color: var(--accent-300);
+    border-color: var(--accent-300);
+    color: #fff;
+}
+
+.btn-success:hover {
+    background-color: var(--primary-700);
+    border-color: var(--primary-700);
+}
+
+/* ===== CARD ===== */
+.card {
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    background-color: #fff;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--accent-300);
+    border-radius: 10px;
+}
+
+/* ===== GLOBAL UTILITIES ===== */
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+.text-primary {
+    color: var(--primary-700) !important;
+}
+
+.bg-primary {
+    background-color: var(--primary-700) !important;
+}
+
+.bg-accent {
+    background-color: var(--accent-100) !important;
+}

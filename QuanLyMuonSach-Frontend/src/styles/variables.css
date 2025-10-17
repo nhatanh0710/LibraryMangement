@@ -1,0 +1,24 @@
+:root {
+    /* ==== Màu chủ đạo (Natural Library Theme) ==== */
+    --primary-900: #1e2d2f;
+    /* Đen than */
+    --primary-700: #116466;
+    /* Xanh teal thư viện */
+    --accent-300: #d9b08c;
+    /* Nâu nhạt, màu gỗ */
+    --accent-100: #ffcb9a;
+    /* Vàng be dịu */
+    --background-light: #f9fafb;
+    /* Nền sáng tự nhiên */
+    --muted-200: #d1e8e2;
+    /* Xanh nhạt, trung gian */
+
+    /* ==== Font & Layout ==== */
+    --font-main: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --radius: 10px;
+    --shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+    /* ==== Màu văn bản ==== */
+    --text-dark: #222;
+    --text-muted: #666;
+}
