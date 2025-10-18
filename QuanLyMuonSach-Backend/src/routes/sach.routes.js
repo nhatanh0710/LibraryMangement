@@ -1,33 +1,30 @@
 import express from "express";
-import { protect, authorizeRole } from "../middlewares/nhanVien.middleware.js";
+import multer from "multer";
 import {
-  getTheoDoiMuonSachs,
-  getTheoDoiMuonSachById,
-  createTheoDoiMuonSach,
-  updateTheoDoiMuonSach,
-  deleteTheoDoiMuonSach,
-} from "../controllers/theoDoiMuonSach.controller.js";
+  getSachs,
+  getSachById,
+  createSach,
+  updateSach,
+  deleteSach,
+} from "../controllers/sach.controller.js";
+
+// Cấu hình upload file
+const upload = multer({ dest: "uploads/" }); // lưu file tạm vào folder "uploads"
 
 const router = express.Router();
 
-router.get("/", getTheoDoiMuonSachs);
-router.get("/:id", getTheoDoiMuonSachById);
-router.post(
-  "/",
-  protect,
-  authorizeRole("GIÁM ĐỐC", "NHÂN VIÊN"),
-  createTheoDoiMuonSach
-);
-router.put(
-  "/:id",
-  protect,
-  authorizeRole("GIÁM ĐỐC", "NHÂN VIÊN"),
-  updateTheoDoiMuonSach
-);
-router.delete(
-  "/:id",
-  protect,
-  authorizeRole("GIÁM ĐỐC", "NHÂN VIÊN"),
-  deleteTheoDoiMuonSach
-);
+// GET danh sách
+router.get("/", getSachs);
+router.get("/:id", getSachById);
+
+// POST CREATE sách: multer parse FormData
+// 'hinhAnh' là tên field file trên FormData
+router.post("/", upload.single("file"), createSach);
+
+// PUT UPDATE sách (có thể kèm file)
+router.put("/:id", upload.single("file"), updateSach);
+
+// DELETE
+router.delete("/:id", deleteSach);
+
 export default router;

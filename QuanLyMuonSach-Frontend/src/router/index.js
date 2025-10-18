@@ -16,11 +16,11 @@ import RegisterStaff from "@/pages/auth/RegisterStaff.vue";
 
 // ===== Admin pages =====
 import Dashboard from "@/pages/NhanVien/Dashboard.vue";
-// import QuanLySach from "@/pages/NhanVien/QuanLySach.vue";
-// import QuanLyDocGia from "@/pages/NhanVien/QuanLyDocGia.vue";
-// import QuanLyNhanVien from "@/pages/NhanVien/QuanLyNhanVien.vue";
-// import QuanLyMuonSach from "@/pages/NhanVien/QuanLyMuonSach.vue";
-// import QuanLyNXB from "@/pages/NhanVien/QuanLyNXB.vue";
+import QuanLySach from "@/pages/NhanVien/QuanLySach.vue";
+import QuanLyDocGia from "@/pages/NhanVien/QuanLyDocGia.vue";
+import QuanLyNhanVien from "@/pages/NhanVien/QuanLyNhanVien.vue";
+import QuanLyMuonSach from "@/pages/NhanVien/QuanLyMuonSach.vue";
+import QuanLyNXB from "@/pages/NhanVien/QuanLyNXB.vue";
 // import ThongKe from "@/pages/NhanVien/ThongKe.vue";
 
 const routes = [
@@ -45,19 +45,19 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: "", name: "Dashboard", component: Dashboard },
-      // { path: "quan-ly-sach", name: "QuanLySach", component: QuanLySach },
-      // { path: "quan-ly-docgia", name: "QuanLyDocGia", component: QuanLyDocGia },
-      // {
-      //   path: "quan-ly-nhanvien",
-      //   name: "QuanLyNhanVien",
-      //   component: QuanLyNhanVien,
-      // },
-      // {
-      //   path: "quan-ly-muon-sach",
-      //   name: "QuanLyMuonSach",
-      //   component: QuanLyMuonSach,
-      // },
-      // { path: "quan-ly-nxb", name: "QuanLyNXB", component: QuanLyNXB },
+      { path: "quan-ly-sach", name: "QuanLySach", component: QuanLySach },
+      { path: "quan-ly-docgia", name: "QuanLyDocGia", component: QuanLyDocGia },
+      {
+        path: "quan-ly-nhanvien",
+        name: "QuanLyNhanVien",
+        component: QuanLyNhanVien,
+      },
+      {
+        path: "quan-ly-muon-sach",
+        name: "QuanLyMuonSach",
+        component: QuanLyMuonSach,
+      },
+      { path: "quan-ly-nxb", name: "QuanLyNXB", component: QuanLyNXB },
       // { path: "thong-ke", name: "ThongKe", component: ThongKe },
     ],
   },

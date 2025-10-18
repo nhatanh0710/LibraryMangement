@@ -10,8 +10,10 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'   // <-- bắt buộc
+
 const props = defineProps({
-  label: { type: String, default: 'Submit' },
+  label: { type: String, default: 'Lưu' },
   variant: { type: String, default: 'primary' }, // primary / success / danger
   type: { type: String, default: 'button' },
   disabled: { type: Boolean, default: false }

@@ -1,24 +1,34 @@
+// controllers/sachController.js
 import asyncHandler from "express-async-handler";
 import Sach from "../models/sach.js";
+// Nếu bạn có model Phiếu Mượn để check quan hệ, import ở đây
+// import PhieuMuon from "../models/phieuMuon.js";
 
-// GET /api/sach - Lấy danh sách sách (có hỗ trợ tìm kiếm và phân trang)
+const buildFileUrl = (req, filename) => {
+  if (!filename) return "";
+  return `${req.protocol}://${req.get("host")}/uploads/${filename}`;
+};
+
+// GET /api/sach - Lấy danh sách sách (tìm kiếm + phân trang)
 export const getSachs = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, search } = req.query; // Lấy giá trị query từ URL
+  const { page = 1, limit = 10, search } = req.query;
   const query = {};
   if (search) {
-    const re = new RegExp(search, "i");
+    const re = new RegExp(String(search), "i");
     query.$or = [{ tenSach: re }, { maSach: re }, { tacGia: re }];
   }
-  const perPage = Math.max(1, Number(limit));
-  const skip = (Math.max(1, Number(page)) - 1) * perPage;
+  const perPage = Math.max(1, Number(limit) || 10);
+  const skip = (Math.max(1, Number(page) || 1) - 1) * perPage;
+
   const [total, items] = await Promise.all([
     Sach.countDocuments(query),
     Sach.find(query)
       .skip(skip)
       .limit(perPage)
       .sort({ createdAt: -1 })
-      .populate("maNXB", "tenNXB"), // Lấy tên nhà xuất bản
+      .populate("maNXB", "tenNXB"),
   ]);
+
   res.json({
     success: true,
     data: items,
@@ -31,83 +41,86 @@ export const getSachs = asyncHandler(async (req, res) => {
   });
 });
 
-// GET /api/sach/:id - Lấy thông tin chi tiết 1 sách theo id
+// GET /api/sach/:id
 export const getSachById = asyncHandler(async (req, res) => {
   const item = await Sach.findById(req.params.id).populate("maNXB", "tenNXB");
   if (!item)
     return res
       .status(404)
-      .json({ success: false, message: "Sach không tồn tại" });
+      .json({ success: false, message: "Sách không tồn tại" });
   res.json({ success: true, data: item });
 });
 
-// POST /api/sach - Thêm mới sách
+// POST /api/sach
 export const createSach = asyncHandler(async (req, res) => {
-  const {
-    maSach,
-    tenSach,
-    donGia,
-    soQuyen,
-    namXuatBan,
-    maNXB,
-    tacGia,
-    moTa,
-    hinhAnh,
-  } = req.body;
+  // Nếu FE gửi FormData, multer đã xử lý file ở req.file; các field ở req.body (strings)
+  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, tacGia, moTa } =
+    req.body;
+
+  // Validate required fields
   if (
     !maSach ||
     !tenSach ||
-    !donGia ||
-    !soQuyen ||
-    !maNXB ||
+    donGia === undefined ||
+    soQuyen === undefined ||
     !tacGia ||
-    !namXuatBan ||
-    !hinhAnh ||
+    namXuatBan === undefined ||
     !moTa
   ) {
     return res
       .status(400)
       .json({ success: false, message: "Thiếu thông tin bắt buộc" });
   }
+
+  // Kiểm tra mã trùng
   const existingSach = await Sach.findOne({ maSach });
   if (existingSach)
     return res
       .status(400)
       .json({ success: false, message: "Mã sách đã tồn tại" });
+
+  // Parse number fields an toàn
+  const donGiaNum = Number(donGia) || 0;
+  const soQuyenNum = Number(soQuyen) || 0;
+  const namNum = Number(namXuatBan) || null;
+
+  // Xử lý file nếu có (multer)
+  let hinhAnhUrl = req.body.hinhAnh || ""; // fallback nếu client gửi URL trực tiếp
+  if (req.file && req.file.filename) {
+    hinhAnhUrl = buildFileUrl(req, req.file.filename);
+  }
+
   const newSach = new Sach({
     maSach,
     tenSach,
-    donGia,
-    soQuyen,
-    soQuyenConLai: soQuyen,
-    namXuatBan,
-    maNXB,
+    donGia: donGiaNum,
+    soQuyen: soQuyenNum,
+    soQuyenConLai: soQuyenNum,
+    namXuatBan: namNum,
+    //maNXB,
     tacGia,
     moTa,
-    hinhAnh,
+    hinhAnh: hinhAnhUrl,
   });
+
   await newSach.save();
   res.status(201).json({ success: true, data: newSach });
+  console.log("req.body:", req.body);
+  console.log("req.file:", req.file);
 });
 
-// PUT /api/sach/:id - Cập nhật thông tin sách theo ID
+// PUT /api/sach/:id
 export const updateSach = asyncHandler(async (req, res) => {
   const item = await Sach.findById(req.params.id);
   if (!item)
     return res
       .status(404)
-      .json({ success: false, message: "Sach không tồn tại" });
-  const {
-    maSach,
-    tenSach,
-    donGia,
-    soQuyen,
-    namXuatBan,
-    maNXB,
-    tacGia,
-    moTa,
-    hinhAnh,
-  } = req.body;
+      .json({ success: false, message: "Sách không tồn tại" });
+
+  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, tacGia, moTa } =
+    req.body;
+
+  // Nếu đổi mã sách, kiểm tra trùng
   if (maSach && maSach !== item.maSach) {
     const existingSach = await Sach.findOne({ maSach });
     if (existingSach)
@@ -118,34 +131,62 @@ export const updateSach = asyncHandler(async (req, res) => {
   }
 
   if (tenSach) item.tenSach = tenSach;
-  if (donGia) item.donGia = donGia;
-  if (soQuyen) {
-    item.soQuyen = soQuyen; // Chỉ cập nhật số lượng mới
-    // Không cập nhật soQuyenConLai ở đây, sẽ xử lý khi duyệt đơn mượn/trả sách
+  if (donGia !== undefined) item.donGia = Number(donGia) || item.donGia;
+  if (soQuyen !== undefined) {
+    // chỉ cập nhật số lượng toàn bộ
+    const newSoQuyen = Number(soQuyen) || item.soQuyen;
+    // Nếu giảm tổng số lượng dưới số đang mượn -> có thể gây vấn đề; bạn có thể kiểm tra soQuyenConLai
+    if (newSoQuyen < item.soQuyen - (item.soQuyen - item.soQuyenConLai)) {
+      // logic phức tạp tuỳ quy tắc: ở đây ta prevent giảm nhỏ hơn số đang mượn
+      return res.status(400).json({
+        success: false,
+        message: "Không thể giảm tổng số lượng nhỏ hơn số lượng đang mượn",
+      });
+    }
+    item.soQuyen = newSoQuyen;
   }
-  if (namXuatBan) item.namXuatBan = namXuatBan;
+  if (namXuatBan !== undefined)
+    item.namXuatBan = Number(namXuatBan) || item.namXuatBan;
   if (maNXB) item.maNXB = maNXB;
   if (tacGia) item.tacGia = tacGia;
   if (moTa) item.moTa = moTa;
-  if (hinhAnh) item.hinhAnh = hinhAnh;
+
+  // Xử lý file mới nếu có
+  if (req.file && req.file.filename) {
+    const newUrl = buildFileUrl(req, req.file.filename);
+    //xóa ảnh cũ
+
+    item.hinhAnh = newUrl;
+  } else if (req.body.hinhAnh) {
+    // nếu client gửi hinhAnh là URL, cập nhật
+    item.hinhAnh = req.body.hinhAnh;
+  }
+
   await item.save();
   res.json({ success: true, data: item });
 });
 
-// DELETE /api/sach/:id - Xoá sách
+// DELETE /api/sach/:id
 export const deleteSach = asyncHandler(async (req, res) => {
   const item = await Sach.findById(req.params.id);
   if (!item)
     return res
       .status(404)
       .json({ success: false, message: "Sách không tồn tại" });
-  // Kiểm tra xem sách có đang được mượn không
-  if (sach.SoLuongDangMuon > 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Không thể xoá sách đang có người mượn",
-    });
+
+  // Cách kiểm tra đơn giản: nếu soQuyenConLai < soQuyen => có sách đang được mượn
+  if (
+    typeof item.soQuyen === "number" &&
+    typeof item.soQuyenConLai === "number"
+  ) {
+    if (item.soQuyenConLai < item.soQuyen) {
+      return res.status(400).json({
+        success: false,
+        message: "Không thể xoá sách đang có người mượn",
+      });
+    }
   }
-  await item.remove();
+  await item.deleteOne();
+  // TODO: nếu lưu file ảnh local, có thể xóa file trên disk ở đây
   res.json({ success: true, message: "Xoá sách thành công" });
 });
