@@ -63,6 +63,7 @@ export const createSach = asyncHandler(async (req, res) => {
     !tenSach ||
     donGia === undefined ||
     soQuyen === undefined ||
+    maNXB === undefined ||
     !tacGia ||
     namXuatBan === undefined ||
     !moTa
@@ -97,7 +98,7 @@ export const createSach = asyncHandler(async (req, res) => {
     soQuyen: soQuyenNum,
     soQuyenConLai: soQuyenNum,
     namXuatBan: namNum,
-    //maNXB,
+    maNXB,
     tacGia,
     moTa,
     hinhAnh: hinhAnhUrl,

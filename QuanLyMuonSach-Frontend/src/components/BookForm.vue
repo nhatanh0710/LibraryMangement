@@ -40,6 +40,17 @@
                 <input v-model="form.tacGia" class="form-control" required />
               </div>
 
+            <!--NXB-->
+              <div class="mb-2">
+                <label class="form-label">Nhà xuất bản</label>
+                <select v-model="form.maNXB" class="form-select" required>
+                  <option value="" disabled>Chọn NXB</option>
+                  <option v-for="nxb in nxbList" :key="nxb._id" :value="nxb.maNXB">
+                    {{ nxb.tenNXB }}
+                  </option>
+                </select>
+              </div>
+
               <!-- Đơn giá -->
               <div class="mb-2">
                 <label class="form-label">Đơn giá</label>
@@ -75,16 +86,23 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, toRaw, onUnmounted } from 'vue'
+import { ref, reactive, computed, toRaw, watch, onUnmounted, onMounted } from 'vue'
 import { createBook, updateBook } from '@/services/bookService'
-
+import api from '@/services/api.js'
+// Props / emits
 const props = defineProps({
   initial: { type: Object, default: null }
 })
 const emit = defineEmits(['close', 'saved'])
 
-const isEdit = computed(() => !!props.initial)
+// Helpers
+const safeClone = (obj) => {
+  if (!obj) return null
+  if (typeof structuredClone === 'function') return structuredClone(obj)
+  try { return JSON.parse(JSON.stringify(obj)) } catch (e) { return { ...obj } }
+}
 
+// Reactive form (local copy)
 const form = reactive({
   maSach: '',
   tenSach: '',
@@ -98,25 +116,64 @@ const form = reactive({
   hinhAnh: ''
 })
 
-// Gán dữ liệu ban đầu nếu sửa
-if (props.initial) {
-  Object.assign(form, props.initial)
-}
-
-// Preview + file
+const isEdit = computed(() => !!props.initial && !!props.initial._id)
+const nxbList = ref([])
+// preview + file
 const preview = ref(null)
 const selectedFile = ref(null)
 let currentObjectUrl = null
 
-// Khởi tạo preview hình cũ khi sửa
-if (props.initial && props.initial.hinhAnh) {
-  preview.value = props.initial.hinhAnh.startsWith('http')
-    ? props.initial.hinhAnh
-    : `http://localhost:5000/${props.initial.hinhAnh}`
-  form.hinhAnh = props.initial.hinhAnh
+function resetFormToDefaults() {
+  Object.assign(form, {
+    maSach: '',
+    tenSach: '',
+    donGia: 0,
+    soQuyen: 1,
+    namXuatBan: null,
+    maNXB: null,
+    tacGia: '',
+    soQuyenConLai: 1,
+    moTa: '',
+    hinhAnh: ''
+  })
+  if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null }
+  selectedFile.value = null
+  preview.value = null
 }
 
-// Xử lý file chọn mới
+// watch props.initial so form updates whenever parent passes a different object
+watch(
+  () => props.initial,
+  (val) => {
+    // cleanup previous objectURL if any
+    if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null }
+
+    if (!val) {
+      resetFormToDefaults()
+      return
+    }
+
+    // clone props into form (avoid mutating parent)
+    const copy = safeClone(val) || {}
+    Object.assign(form, { ...form, ...copy })
+
+    // setup preview from stored image string (if any)
+    if (copy.hinhAnh) {
+      preview.value = copy.hinhAnh.startsWith('http')
+        ? copy.hinhAnh
+        : `${(import.meta.env.VITE_API_BASEURL || 'http://localhost:5000').replace(/\/api$/, '')}/${copy.hinhAnh.replace(/^\/+/, '')}`
+      form.hinhAnh = copy.hinhAnh
+    } else {
+      preview.value = null
+      form.hinhAnh = ''
+    }
+
+    selectedFile.value = null
+  },
+  { immediate: true }
+)
+
+// file handling
 function onFileChange(e) {
   const file = e.target.files?.[0]
   if (!file) return
@@ -124,19 +181,18 @@ function onFileChange(e) {
   selectedFile.value = file
   currentObjectUrl = URL.createObjectURL(file)
   preview.value = currentObjectUrl
-  form.hinhAnh = '' // backend sẽ nhận file mới
+  form.hinhAnh = '' // indicate that backend should accept file
 }
 
-// Xóa hình
 function clearImage() {
   if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl)
+  currentObjectUrl = null
   selectedFile.value = null
   preview.value = null
   form.hinhAnh = ''
-  currentObjectUrl = null
 }
 
-// Submit form
+// submit
 async function submit() {
   try {
     const fd = new FormData()
@@ -144,22 +200,22 @@ async function submit() {
     Object.keys(payload).forEach(key => {
       const val = payload[key]
       if (val === undefined || val === null) return
+      // for safety: append primitives; if object, JSON stringify
       fd.append(key, typeof val === 'object' ? JSON.stringify(val) : String(val))
     })
-
     if (selectedFile.value) fd.append('file', selectedFile.value)
 
     const bookObj = isEdit.value
       ? await updateBook(props.initial._id, fd)
       : await createBook(fd)
 
-    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl)
-    currentObjectUrl = null
+    if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null }
+    selectedFile.value = null
 
     emit('saved', bookObj)
   } catch (err) {
     console.error(err)
-    alert(err.response?.data?.message || 'Lỗi khi lưu sách')
+    alert(err?.response?.data?.message || 'Lỗi khi lưu sách')
   }
 }
 
@@ -168,7 +224,16 @@ function imgError(e) {
 }
 
 onUnmounted(() => {
-  if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl)
+  if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null }
+})
+onMounted(async () => {
+  try {
+    const res = await api.get('/nxb') // GET tất cả NXB
+    nxbList.value = res.data.data || []
+  } catch (err) {
+    console.error('Lỗi load NXB:', err)
+    nxbList.value = []
+  }
 })
 </script>
 

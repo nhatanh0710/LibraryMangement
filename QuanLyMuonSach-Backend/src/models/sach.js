@@ -10,7 +10,7 @@ const sachSchema = new mongoose.Schema(
     maNXB: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "NhaXuatBan",
-      // required: true,
+      required: true,
     },
     tacGia: { type: String, required: true },
     soQuyenConLai: { type: Number, required: true, default: 1 },

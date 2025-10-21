@@ -48,14 +48,15 @@ textarea {
 }
 
 .btn-success {
-    background-color: var(--accent-300);
-    border-color: var(--accent-300);
+    background-color: var(--primary-700);
+    border-color: var(--primary-700);
     color: #fff;
 }
 
 .btn-success:hover {
-    background-color: var(--primary-700);
-    border-color: var(--primary-700);
+    background-color: var(--muted-200);
+    border-color: var(---muted-200);
+    color: black;
 }
 
 /* ===== CARD ===== */

@@ -1,25 +1,19 @@
 import api from "@/services/api";
 
-// unwrap payload
 const unwrapPayload = (promise) =>
   promise.then((res) => {
-    const body = res?.data ?? res;
-    return body?.data !== undefined ? body.data : body;
+    const body = res?.data || res;
+    // Giữ nguyên success, data, meta
+    return body && body.success ? body : body;
   });
 
-// GET list of books
-export const fetchBooks = (params = {}) =>
-  unwrapPayload(api.get("/sach", { params }));
+/** Lấy danh sách sách (hỗ trợ phân trang) */
+export const fetchBooks = (page = 1, limit = 10) =>
+  unwrapPayload(api.get(`/sach?page=${page}&limit=${limit}`));
 
-// GET single book
 export const fetchBook = (id) => unwrapPayload(api.get(`/sach/${id}`));
-
-// CREATE book (JSON or FormData)
-export const createBook = (data) => unwrapPayload(api.post("/sach", data));
-
-// UPDATE book
-export const updateBook = (id, data) =>
-  unwrapPayload(api.put(`/sach/${id}`, data));
-
-// DELETE book
+export const createBook = (payload) =>
+  unwrapPayload(api.post("/sach", payload));
+export const updateBook = (id, payload) =>
+  unwrapPayload(api.put(`/sach/${id}`, payload));
 export const deleteBook = (id) => unwrapPayload(api.delete(`/sach/${id}`));
