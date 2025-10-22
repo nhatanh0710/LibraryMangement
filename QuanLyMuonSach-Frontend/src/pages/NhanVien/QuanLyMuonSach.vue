@@ -65,21 +65,32 @@
       :initial="selected"
       :docGias="docGias"
       :saches="saches"
+      :docGiasLoading="loadingDocGias"
+      :sachesLoading="loadingSaches"
       @close="closeForm"
       @saved="onSaved"
+      @request-reload="onRequestReload"
     />
   </div>
 </template>
 
 <script setup>
+/*
+  Parent page for TheoDoiMuonSachForm:
+  - provides docGias/saches & loading flags to form
+  - handles request-reload emitted by form (server-side search)
+  - loads list of borrow records
+*/
+
 import { ref, onMounted } from "vue";
 import TheoDoiMuonSachForm from "@/components/TheoDoiMuonSachForm.vue";
 import Pagination from "@/components/Pagination.vue";
-import loadData from "@/utils/loadData.js";
-import * as TheoDoiService from "@/services/muonSachService"; // bạn tạo service phù hợp
+import loadData from "@/utils/loadData.js"; // your existing util
+import * as TheoDoiService from "@/services/muonSachService";
 import * as DocGiaService from "@/services/docGiaService";
-import * as SachService from "@/services/bookService";
+import * as SachService from "@/services/bookService"; // note file name in your project
 
+/* records table state */
 const records = ref([]);
 const loading = ref(false);
 const showForm = ref(false);
@@ -90,9 +101,13 @@ const limit = ref(10);
 const total = ref(0);
 const totalPages = ref(0);
 
-const docGias = ref([]); // cached docgia list for select
-const saches = ref([]);  // cached sach list for select
+/* lookup lists for selects */
+const docGias = ref([]); // items for AsyncSelect
+const saches = ref([]);
+const loadingDocGias = ref(false);
+const loadingSaches = ref(false);
 
+/* load main borrow records (existing util usage) */
 async function loadTheoDoi(p = 1) {
   try {
     await loadData(TheoDoiService.fetchMuonSachs, records, p, limit.value, {
@@ -107,35 +122,46 @@ async function loadTheoDoi(p = 1) {
   }
 }
 
+/* load initial small lookup lists so selects have something to show quickly */
 async function loadLookups() {
   try {
-    // tải danh sách độc giả và sách để hiển thị tên trong bảng / select
+    loadingDocGias.value = true;
+    loadingSaches.value = true;
+
+    // use fetchDocGias/fetchBooks to load an initial small page (adjust limit as needed)
     const [dgRes, sachRes] = await Promise.all([
-      DocGiaService.fetchAllSmall(), // ví dụ trả về list nhỏ (id + name)
-      SachService.fetchAllSmall()
+      DocGiaService.fetchDocGias(1, 50),
+      SachService.fetchBooks(1, 50)
     ]);
+
+    // unwrapPayload returns body { success, data, meta } so items are in .data
     docGias.value = dgRes?.data || dgRes || [];
     saches.value = sachRes?.data || sachRes || [];
   } catch (err) {
     console.warn("loadLookups failed", err);
+    docGias.value = [];
+    saches.value = [];
+  } finally {
+    loadingDocGias.value = false;
+    loadingSaches.value = false;
   }
 }
 
+/* open / close form */
 function openAdd() {
   selected.value = null;
   showForm.value = true;
 }
-
 function openEdit(r) {
   selected.value = r;
   showForm.value = true;
 }
-
 function closeForm() {
   selected.value = null;
   showForm.value = false;
 }
 
+/* when form emits saved, update table & close */
 function onSaved(saved) {
   if (!saved) {
     closeForm();
@@ -149,6 +175,7 @@ function onSaved(saved) {
   closeForm();
 }
 
+/* delete handler */
 async function handleDelete(r) {
   if (!r || !r._id) {
     alert("Bản ghi không hợp lệ");
@@ -168,6 +195,7 @@ async function handleDelete(r) {
   }
 }
 
+/* helpers to format display */
 function formatDate(iso) {
   if (!iso) return "";
   try {
@@ -179,26 +207,25 @@ function formatDate(iso) {
 
 function displayDocGia(maDocGia) {
   if (!maDocGia) return "";
-  // nếu maDocGia là object populate (hoTen), hiển thị luôn
   if (typeof maDocGia === "object") return maDocGia.hoLot ? `${maDocGia.hoLot} ${maDocGia.ten}` : maDocGia.ten || maDocGia._id;
-  const found = docGias.value.find(d => d._id === maDocGia || d.id === maDocGia);
+  const found = docGias.value.find(d => d._id === maDocGia || d.id === maDocGia || d.maDocGia === maDocGia);
   return found ? (found.hoLot ? `${found.hoLot} ${found.ten}` : found.ten || found.name) : maDocGia;
 }
 
 function displaySach(maSach) {
   if (!maSach) return "";
   if (typeof maSach === "object") return maSach.tenSach || maSach.ten || maSach._id;
-  const found = saches.value.find(s => s._id === maSach || s.id === maSach);
+  const found = saches.value.find(s => s._id === maSach || s.id === maSach || s.maSach === maSach);
   return found ? (found.tenSach || found.ten) : maSach;
 }
 
+/* pagination handlers */
 function changePage(p) {
   const np = Number(p) || 1;
   if (np === page.value) return;
   page.value = np;
   loadTheoDoi(page.value);
 }
-
 function changeLimit(l) {
   const nl = Number(l) || 10;
   if (nl === limit.value) return;
@@ -206,12 +233,57 @@ function changeLimit(l) {
   page.value = 1;
   loadTheoDoi(page.value);
 }
-
 function onPageChange({ page: p, limit: l } = {}) {
   if (p) changePage(p);
   if (l) changeLimit(l);
 }
 
+/* --- server-side search handling (debounced) --- */
+/* simple debounce util */
+function debounce(fn, wait = 250) {
+  let t = null;
+  return function (...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), wait);
+  };
+}
+
+const doSearchDocGias = debounce(async (q) => {
+  loadingDocGias.value = true;
+  try {
+    // call backend search endpoint; unwrapPayload returns body => array in .data
+    const res = await DocGiaService.searchDocGias(q || "", 1, 30);
+    docGias.value = res?.data || [];
+  } catch (e) {
+    console.error("searchDocGias", e);
+    docGias.value = [];
+  } finally {
+    loadingDocGias.value = false;
+  }
+}, 200);
+
+const doSearchSaches = debounce(async (q) => {
+  loadingSaches.value = true;
+  try {
+    const res = await SachService.searchBooks(q || "", 1, 30);
+    saches.value = res?.data || [];
+  } catch (e) {
+    console.error("searchBooks", e);
+    saches.value = [];
+  } finally {
+    loadingSaches.value = false;
+  }
+}, 200);
+
+/* handler passed into form: form emits { type: 'docgia'|'sach', q }  */
+function onRequestReload(payload) {
+  if (!payload || !payload.type) return;
+  const q = payload.q || "";
+  if (payload.type === "docgia") doSearchDocGias(q);
+  else if (payload.type === "sach") doSearchSaches(q);
+}
+
+/* initial mount */
 onMounted(async () => {
   await loadLookups();
   loadTheoDoi(1);

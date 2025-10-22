@@ -45,7 +45,7 @@
                 <label class="form-label">Nhà xuất bản</label>
                 <select v-model="form.maNXB" class="form-select" required>
                   <option value="" disabled>Chọn NXB</option>
-                  <option v-for="nxb in nxbList" :key="nxb._id" :value="nxb.maNXB">
+                  <option v-for="nxb in nxbList" :key="nxb._id" :value="nxb._id">
                     {{ nxb.tenNXB }}
                   </option>
                 </select>
@@ -97,9 +97,38 @@ const emit = defineEmits(['close', 'saved'])
 
 // Helpers
 const safeClone = (obj) => {
-  if (!obj) return null
-  if (typeof structuredClone === 'function') return structuredClone(obj)
-  try { return JSON.parse(JSON.stringify(obj)) } catch (e) { return { ...obj } }
+  if (obj == null) return null
+
+  // primitives
+  if (typeof obj !== 'object') return obj
+
+  // Files/Blobs should be returned as-is
+  if (obj instanceof File || obj instanceof Blob) return obj
+
+  // try JSON deep clone first (safe for plain data)
+  try {
+    return JSON.parse(JSON.stringify(obj))
+  } catch (e) {
+    // fallback: try structuredClone if available and object looks safe
+    try {
+      if (typeof structuredClone === 'function') {
+        // avoid cloning DOM nodes or Window by quick check
+        const hasBad = Object.values(obj).some(v =>
+          typeof v === 'function' ||
+          (typeof v === 'object' && v !== null && (v instanceof Window || v instanceof Element))
+        )
+        if (!hasBad) return structuredClone(obj)
+      }
+    } catch (err) {
+      // ignore
+    }
+    // last resort: shallow copy
+    try {
+      return { ...obj }
+    } catch {
+      return null
+    }
+  }
 }
 
 // Reactive form (local copy)
@@ -153,15 +182,18 @@ watch(
       return
     }
 
-    // clone props into form (avoid mutating parent)
+    // avoid cloning non-plain data coming from parent
     const copy = safeClone(val) || {}
+    if (copy.maNXB && typeof copy.maNXB === 'object') {
+      copy.maNXB = copy.maNXB._id || copy.maNXB
+    }
+
     Object.assign(form, { ...form, ...copy })
 
-    // setup preview from stored image string (if any)
     if (copy.hinhAnh) {
-      preview.value = copy.hinhAnh.startsWith('http')
+      preview.value = typeof copy.hinhAnh === 'string' && copy.hinhAnh.startsWith('http')
         ? copy.hinhAnh
-        : `${(import.meta.env.VITE_API_BASEURL || 'http://localhost:5000').replace(/\/api$/, '')}/${copy.hinhAnh.replace(/^\/+/, '')}`
+        : `${(import.meta.env.VITE_API_BASEURL || 'http://localhost:5000').replace(/\/api$/, '')}/${String(copy.hinhAnh).replace(/^\/+/, '')}`
       form.hinhAnh = copy.hinhAnh
     } else {
       preview.value = null
@@ -172,6 +204,7 @@ watch(
   },
   { immediate: true }
 )
+
 
 // file handling
 function onFileChange(e) {
@@ -197,12 +230,19 @@ async function submit() {
   try {
     const fd = new FormData()
     const payload = toRaw(form)
-    Object.keys(payload).forEach(key => {
+
+    for (const key of Object.keys(payload)) {
       const val = payload[key]
-      if (val === undefined || val === null) return
-      // for safety: append primitives; if object, JSON stringify
-      fd.append(key, typeof val === 'object' ? JSON.stringify(val) : String(val))
-    })
+      if (val === undefined || val === null) continue
+
+      if (val instanceof File || val instanceof Blob) {
+        fd.append(key, val)
+      } else {
+        // append primitives and id strings — do NOT JSON.stringify whole objects
+        fd.append(key, String(val))
+      }
+    }
+
     if (selectedFile.value) fd.append('file', selectedFile.value)
 
     const bookObj = isEdit.value
@@ -218,6 +258,7 @@ async function submit() {
     alert(err?.response?.data?.message || 'Lỗi khi lưu sách')
   }
 }
+
 
 function imgError(e) {
   e.target.src = 'https://via.placeholder.com/120x160?text=No+Image'

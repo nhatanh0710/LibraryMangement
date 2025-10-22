@@ -17,3 +17,11 @@ export const createDocGia = (payload) =>
 export const updateDocGia = (id, payload) =>
   unwrapPayload(api.put(`/docgia/${id}`, payload));
 export const deleteDocGia = (id) => unwrapPayload(api.delete(`/docgia/${id}`));
+// search server-side theo param 'search'
+export const searchDocGias = (search = "", page = 1, limit = 20) => {
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  params.append("page", page);
+  params.append("limit", limit);
+  return unwrapPayload(api.get(`/docgia?${params.toString()}`));
+};

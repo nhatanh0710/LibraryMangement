@@ -105,9 +105,10 @@ function openAdd() {
   showForm.value = true
 }
 function openEdit(book) {
-  selected.value = book // or clone { ...book } if you want
+  selected.value = JSON.parse(JSON.stringify(book)) // clone an toàn
   showForm.value = true
 }
+
 function closeForm() {
   showForm.value = false
   selected.value = null

@@ -49,8 +49,9 @@ export const getTheoDoiMuonSachById = asyncHandler(async (req, res) => {
 
 // POST /api/theodoimuonsach - Thêm mới theo dõi mượn sách
 export const createTheoDoiMuonSach = asyncHandler(async (req, res) => {
-  const { maDocGia, maSach, ngayMuon, ngayTra, trangThai } = req.body;
-  if (!maDocGia || !maSach || !ngayMuon || !trangThai || !ngayTra) {
+  const { maDocGia, maSach, ngayMuon, ngayDuKienTra, ngayTra, trangThai } =
+    req.body;
+  if (!maDocGia || !maSach || !ngayMuon || !ngayDuKienTra || !trangThai) {
     return res
       .status(400)
       .json({ success: false, message: "Thiếu thông tin bắt buộc" });
@@ -65,11 +66,16 @@ export const createTheoDoiMuonSach = asyncHandler(async (req, res) => {
     maDocGia,
     maSach,
     ngayMuon,
+    ngayDuKienTra,
     ngayTra,
     trangThai,
   });
   await newTheoDoiMuonSach.save();
-  res.status(201).json({ success: true, data: newTheoDoiMuonSach });
+  // populate ngay trước khi trả
+  const populated = await TheoDoiMuonSach.findById(newTheoDoiMuonSach._id)
+    .populate("maDocGia", "hoLot ten maDocGia")
+    .populate("maSach", "tenSach maSach tacGia");
+  res.status(201).json({ success: true, data: populated });
 });
 
 // PUT /api/theodoimuonsach/:id - Cập nhật thông tin theo dõi mượn sách

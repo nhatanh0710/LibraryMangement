@@ -25,7 +25,7 @@ export const getSachs = asyncHandler(async (req, res) => {
     Sach.find(query)
       .skip(skip)
       .limit(perPage)
-      .sort({ createdAt: -1 })
+      .sort({ maSach: 1 })
       .populate("maNXB", "tenNXB"),
   ]);
 

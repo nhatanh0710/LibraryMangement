@@ -5,8 +5,6 @@ import bcrypt from "bcryptjs";
 import DocGia from "../models/DocGia.js";
 import theoDoiMuonSach from "../models/theoDoiMuonSach.js";
 
-
-
 // POST /api/docgia/register
 export const registerDocGia = asyncHandler(async (req, res) => {
   const { maDocGia, hoLot, ten, dienThoai, password } = req.body;
@@ -102,7 +100,7 @@ export const getDocGias = asyncHandler(async (req, res) => {
 
   const [total, items] = await Promise.all([
     DocGia.countDocuments(query),
-    DocGia.find(query).skip(skip).limit(perPage).sort({ createdAt: -1 }),
+    DocGia.find(query).skip(skip).limit(perPage).sort({ maDocGia: 1 }),
   ]);
 
   res.json({

@@ -17,3 +17,11 @@ export const createBook = (payload) =>
 export const updateBook = (id, payload) =>
   unwrapPayload(api.put(`/sach/${id}`, payload));
 export const deleteBook = (id) => unwrapPayload(api.delete(`/sach/${id}`));
+export const searchBooks = (search = "", page = 1, limit = 20) => {
+  const params = new URLSearchParams();
+  if (search) params.append("search", search);
+  params.append("page", page);
+  params.append("limit", limit);
+  return unwrapPayload(api.get(`/sach?${params.toString()}`));
+};
+

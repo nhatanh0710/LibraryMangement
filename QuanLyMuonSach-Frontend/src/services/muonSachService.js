@@ -11,7 +11,8 @@ export const fetchMuonSachs = (page = 1, limit = 10) =>
   unwrapPayload(api.get(`/theodoimuonsach?page=${page}&limit=${limit}`));
 
 /** Lấy chi tiết một phiếu mượn */
-export const fetchMuonSach = (id) => unwrapPayload(api.get(`/theodoimuonsach/${id}`));
+export const fetchMuonSach = (id) =>
+  unwrapPayload(api.get(`/theodoimuonsach/${id}`));
 
 /** Tạo mới phiếu mượn */
 export const createMuonSach = (payload) =>
@@ -24,3 +25,9 @@ export const updateMuonSach = (id, payload) =>
 /** Xóa phiếu mượn */
 export const deleteMuonSach = (id) =>
   unwrapPayload(api.delete(`/theodoimuonsach/${id}`));
+
+export const fetchTheoDoi = fetchMuonSachs;
+export const fetchTheoDoiById = fetchMuonSach;
+export const createTheoDoi = createMuonSach;
+export const updateTheoDoi = updateMuonSach;
+export const deleteTheoDoi = deleteMuonSach;

@@ -8,41 +8,46 @@
               <h5 class="modal-title">
                 {{ isEdit ? "Sửa phiếu mượn" : "Tạo phiếu mượn" }}
               </h5>
-              <button
-                type="button"
-                class="btn-close"
-                @click="$emit('close')"
-              ></button>
+              <button type="button" class="btn-close" @click="$emit('close')"></button>
             </div>
+
             <div class="modal-body">
+              <!-- ĐỘC GIẢ -->
               <div class="mb-3">
                 <label class="form-label">Độc giả</label>
-                <select v-model="form.maDocGia" class="form-select" required>
-                  <option value="" disabled>-- chọn độc giả --</option>
-                  <option
-                    v-for="d in docGias"
-                    :key="d._id || d.id"
-                    :value="d._id || d.id"
-                  >
-                    {{ d.hoLot ? `${d.hoLot} ${d.ten}` : (d.ten || d.name) }}
-                  </option>
-                </select>
+                <div class="d-flex gap-2 align-items-center mb-1">
+                  <AsyncSelect
+                    v-model="form.maDocGia"
+                    :items="docGias"
+                    :loading="docGiasLoading"
+                    placeholder="Gõ mã hoặc họ tên để tìm..."
+                    :displayFn="formatDocGiaOption"
+                    @search="onDocGiaQuery"
+                    @select="onDocGiaSelected"
+                  />
+                  <button type="button" class="btn btn-outline-primary btn-sm" @click="$emit('add-docgia')">
+                    + Thêm
+                  </button>
+                </div>
               </div>
 
+              <!-- SÁCH -->
               <div class="mb-3">
                 <label class="form-label">Sách</label>
-                <select v-model="form.maSach" class="form-select" required>
-                  <option value="" disabled>-- chọn sách --</option>
-                  <option
-                    v-for="s in saches"
-                    :key="s._id || s.id"
-                    :value="s._id || s.id"
-                  >
-                    {{ s.tenSach || s.ten }}
-                  </option>
-                </select>
+                <div class="d-flex gap-2 align-items-center mb-1">
+                  <AsyncSelect
+                    v-model="form.maSach"
+                    :items="saches"
+                    :loading="sachesLoading"
+                    placeholder="Gõ mã hoặc tên sách để tìm..."
+                    :displayFn="formatSachOption"
+                    @search="onSachQuery"
+                    @select="onSachSelected"
+                  />
+                </div>
               </div>
 
+              <!-- Dates -->
               <div class="row">
                 <div class="col-md-6 mb-3">
                   <label class="form-label">Ngày mượn</label>
@@ -93,10 +98,15 @@
                 type="button"
                 class="btn btn-secondary"
                 @click="$emit('close')"
+                :disabled="saving"
               >
                 Hủy
               </button>
-              <button type="submit" class="btn btn-primary" :disabled="saving">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                :disabled="saving || !canSubmit"
+              >
                 <span
                   v-if="saving"
                   class="spinner-border spinner-border-sm me-2"
@@ -113,163 +123,190 @@
 </template>
 
 <script setup>
-  import { reactive, toRefs, watch, computed } from "vue";
-  import * as TheoDoiService from "@/services/muonSachService";
+import { reactive, ref, watch, computed, toRefs } from "vue";
+import AsyncSelect from "@/components/AsyncSelect.vue";
+import * as TheoDoiService from "@/services/muonSachService";
 
-  const props = defineProps({
-    initial: { type: Object, default: null },
-    docGias: { type: Array, default: () => [] },
-    saches: { type: Array, default: () => [] },
-  });
-  const emit = defineEmits(["close", "saved"]);
+const props = defineProps({
+  initial: { type: Object, default: null },
+  docGias: { type: Array, default: () => [] },
+  saches: { type: Array, default: () => [] },
+  docGiasLoading: { type: Boolean, default: false },
+  sachesLoading: { type: Boolean, default: false },
+});
+const { docGias, saches, docGiasLoading, sachesLoading } = toRefs(props);
+const emit = defineEmits(["close", "saved", "add-docgia", "add-sach", "request-reload"]);
 
-  const isEdit = computed(() => !!props.initial && !!props.initial._id);
+const isEdit = computed(() => !!props.initial && !!props.initial._id);
 
-  const form = reactive({
-    _id: null,
-    maDocGia: "",
-    maSach: "",
-    ngayMuon: null,
-    ngayDuKienTra: null,
-    ngayTra: null,
-    trangThai: "CHỜ DUYỆT",
-    // helper fields for local datetime inputs
-    ngayMuonLocal: "",
-    ngayDuKienTraLocal: "",
-    ngayTraLocal: "",
-  });
+const form = reactive({
+  _id: null,
+  maDocGia: "",
+  maSach: "",
+  ngayMuon: null,
+  ngayDuKienTra: null,
+  ngayTra: null,
+  trangThai: "CHỜ DUYỆT",
+  ngayMuonLocal: "",
+  ngayDuKienTraLocal: "",
+  ngayTraLocal: "",
+});
 
-  const saving = ref(false);
-  const error = ref("");
+const saving = ref(false);
+const error = ref("");
 
-  watch(
-    () => props.initial,
-    (v) => {
-      if (!v) {
-        // reset
-        Object.assign(form, {
-          _id: null,
-          maDocGia: "",
-          maSach: "",
-          ngayMuon: null,
-          ngayDuKienTra: null,
-          ngayTra: null,
-          trangThai: "CHỜ DUYỆT",
-          ngayMuonLocal: "",
-          ngayDuKienTraLocal: "",
-          ngayTraLocal: "",
-        });
-        error.value = "";
-        return;
-      }
-      // populate from initial
-      form._id = v._id;
-      form.maDocGia = v.maDocGia?._id || v.maDocGia || "";
-      form.maSach = v.maSach?._id || v.maSach || "";
-      form.trangThai = v.trangThai || "CHỜ DUYỆT";
+// when AsyncSelect emits `search`, forward to parent as request-reload
+function onDocGiaQuery(q) {
+  emit("request-reload", { type: "docgia", q });
+}
+function onSachQuery(q) {
+  emit("request-reload", { type: "sach", q });
+}
 
-      // convert dates to local input-friendly strings
-      form.ngayMuonLocal = v.ngayMuon ? toLocalDateTimeInput(v.ngayMuon) : "";
-      form.ngayDuKienTraLocal = v.ngayDuKienTra
-        ? toLocalDateInput(v.ngayDuKienTra)
-        : "";
-      form.ngayTraLocal = v.ngayTra ? toLocalDateTimeInput(v.ngayTra) : "";
-    },
-    { immediate: true }
-  );
+function formatDocGiaOption(d) {
+  if (!d) return "";
+  const code = d.maDocGia || d._id || d.id || "";
+  const name = d.hoLot ? `${d.hoLot} ${d.ten}` : d.ten || d.name || "";
+  return code ? `${code} — ${name}` : name;
+}
+function formatSachOption(s) {
+  if (!s) return "";
+  const code = s.maSach || s._id || s.id || "";
+  const name = s.tenSach || s.ten || "";
+  return code ? `${code} — ${name}` : name;
+}
 
-  function toLocalDateTimeInput(val) {
-    try {
-      const d = new Date(val);
-      // yyyy-mm-ddThh:mm
-      const pad = (n) => String(n).padStart(2, "0");
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
-        d.getDate()
-      )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    } catch {
-      return "";
-    }
-  }
-  function toLocalDateInput(val) {
-    try {
-      const d = new Date(val);
-      const pad = (n) => String(n).padStart(2, "0");
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    } catch {
-      return "";
-    }
-  }
-  function toIsoFromLocalDateTime(s) {
-    if (!s) return null;
-    // browser local -> ISO
-    const d = new Date(s);
-    return d.toISOString();
-  }
-  function toIsoFromLocalDate(s) {
-    if (!s) return null;
-    const d = new Date(s + "T00:00:00");
-    return d.toISOString();
-  }
+// when user selects an item from AsyncSelect, we may want to do extra work (optional)
+function onDocGiaSelected(item) {
+  // item selected; form.maDocGia already set via v-model
+  // optionally: store display text into form (we use only id)
+}
+function onSachSelected(item) {
+  // optional
+}
 
-  async function onSubmit() {
-    error.value = "";
-    // basic validation
-    if (!form.maDocGia) {
-      error.value = "Chọn độc giả";
+// watchers to populate/reset form
+watch(
+  () => props.initial,
+  (v) => {
+    if (!v) {
+      Object.assign(form, {
+        _id: null,
+        maDocGia: "",
+        maSach: "",
+        ngayMuon: null,
+        ngayDuKienTra: null,
+        ngayTra: null,
+        trangThai: "CHỜ DUYỆT",
+        ngayMuonLocal: "",
+        ngayDuKienTraLocal: "",
+        ngayTraLocal: "",
+      });
+      error.value = "";
       return;
     }
-    if (!form.maSach) {
-      error.value = "Chọn sách";
-      return;
-    }
-    if (!form.ngayDuKienTraLocal) {
-      error.value = "Chọn ngày dự kiến trả";
-      return;
-    }
+    form._id = v._id;
+    form.maDocGia = v.maDocGia?._id || v.maDocGia || "";
+    form.maSach = v.maSach?._id || v.maSach || "";
+    form.trangThai = v.trangThai || "CHỜ DUYỆT";
+    form.ngayMuonLocal = v.ngayMuon ? toLocalDateTimeInput(v.ngayMuon) : "";
+    form.ngayDuKienTraLocal = v.ngayDuKienTra ? toLocalDateInput(v.ngayDuKienTra) : "";
+    form.ngayTraLocal = v.ngayTra ? toLocalDateTimeInput(v.ngayTra) : "";
+  },
+  { immediate: true }
+);
 
-    // prepare payload
-    const payload = {
-      maDocGia: form.maDocGia,
-      maSach: form.maSach,
-      ngayMuon:
-        toIsoFromLocalDateTime(form.ngayMuonLocal) || new Date().toISOString(),
-      ngayDuKienTra: toIsoFromLocalDate(form.ngayDuKienTraLocal),
-      ngayTra: toIsoFromLocalDateTime(form.ngayTraLocal),
-      trangThai: form.trangThai,
-    };
-
-    try {
-      saving.value = true;
-      let res;
-      if (isEdit.value && form._id) {
-        res = await TheoDoiService.updateTheoDoi(form._id, payload);
-        // res.data or res
-        emit("saved", res?.data || res);
-      } else {
-        res = await TheoDoiService.createTheoDoi(payload);
-        emit("saved", res?.data || res);
-      }
-    } catch (err) {
-      console.error("save error", err);
-      error.value = err?.response?.data?.message || "Lưu thất bại";
-      emit("saved", null);
-    } finally {
-      saving.value = false;
-    }
+// date helpers
+function toLocalDateTimeInput(val) {
+  try {
+    const d = new Date(val);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return "";
   }
+}
+function toLocalDateInput(val) {
+  try {
+    const d = new Date(val);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  } catch {
+    return "";
+  }
+}
+function toIsoFromLocalDateTime(s) {
+  if (!s) return null;
+  const d = new Date(s);
+  return d.toISOString();
+}
+function toIsoFromLocalDate(s) {
+  if (!s) return null;
+  const d = new Date(s + "T00:00:00");
+  return d.toISOString();
+}
+
+// computed to know if form can submit (UI-level)
+const canSubmit = computed(() => {
+  return !!form.maDocGia && !!form.maSach && !!form.ngayDuKienTraLocal;
+});
+
+// submit logic (unchanged)
+async function onSubmit() {
+  error.value = "";
+  if (!form.maDocGia) {
+    error.value = "Chọn độc giả";
+    return;
+  }
+  if (!form.maSach) {
+    error.value = "Chọn sách";
+    return;
+  }
+  if (!form.ngayDuKienTraLocal) {
+    error.value = "Chọn ngày dự kiến trả";
+    return;
+  }
+
+  const payload = {
+    maDocGia: form.maDocGia,
+    maSach: form.maSach,
+    ngayMuon: toIsoFromLocalDateTime(form.ngayMuonLocal) || new Date().toISOString(),
+    ngayDuKienTra: toIsoFromLocalDate(form.ngayDuKienTraLocal),
+    ngayTra: toIsoFromLocalDateTime(form.ngayTraLocal),
+    trangThai: form.trangThai,
+  };
+
+  try {
+    saving.value = true;
+    let res;
+    if (isEdit.value && form._id) {
+      res = await TheoDoiService.updateTheoDoi(form._id, payload);
+      emit("saved", res?.data || res);
+    } else {
+      res = await TheoDoiService.createTheoDoi(payload);
+      emit("saved", res?.data || res);
+    }
+  } catch (err) {
+    console.error("save error", err);
+    error.value = err?.response?.data?.message || "Lưu thất bại";
+    emit("saved", null);
+  } finally {
+    saving.value = false;
+  }
+}
 </script>
 
 <style scoped>
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
-  }
-  .modal {
-    z-index: 1060;
-  }
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+.modal {
+  z-index: 1060;
+}
 </style>
