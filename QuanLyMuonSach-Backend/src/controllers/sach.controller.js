@@ -11,11 +11,11 @@ const buildFileUrl = (req, filename) => {
 
 // GET /api/sach - Lấy danh sách sách (tìm kiếm + phân trang)
 export const getSachs = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, search } = req.query;
+  const { page = 1, limit = 15, search } = req.query;
   const query = {};
   if (search) {
     const re = new RegExp(String(search), "i");
-    query.$or = [{ tenSach: re }, { maSach: re }, { tacGia: re }];
+    query.$or = [{ tenSach: re }, { maSach: re }, { nguonGoc_tacGia: re }];
   }
   const perPage = Math.max(1, Number(limit) || 10);
   const skip = (Math.max(1, Number(page) || 1) - 1) * perPage;
@@ -54,7 +54,7 @@ export const getSachById = asyncHandler(async (req, res) => {
 // POST /api/sach
 export const createSach = asyncHandler(async (req, res) => {
   // Nếu FE gửi FormData, multer đã xử lý file ở req.file; các field ở req.body (strings)
-  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, tacGia, moTa } =
+  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, nguonGoc_tacGia, moTa } =
     req.body;
 
   // Validate required fields
@@ -64,7 +64,7 @@ export const createSach = asyncHandler(async (req, res) => {
     donGia === undefined ||
     soQuyen === undefined ||
     maNXB === undefined ||
-    !tacGia ||
+    !nguonGoc_tacGia ||
     namXuatBan === undefined ||
     !moTa
   ) {
@@ -99,7 +99,7 @@ export const createSach = asyncHandler(async (req, res) => {
     soQuyenConLai: soQuyenNum,
     namXuatBan: namNum,
     maNXB,
-    tacGia,
+    nguonGoc_tacGia,
     moTa,
     hinhAnh: hinhAnhUrl,
   });
@@ -118,7 +118,7 @@ export const updateSach = asyncHandler(async (req, res) => {
       .status(404)
       .json({ success: false, message: "Sách không tồn tại" });
 
-  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, tacGia, moTa } =
+  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, nguonGoc_tacGia, moTa } =
     req.body;
 
   // Nếu đổi mã sách, kiểm tra trùng
@@ -149,7 +149,7 @@ export const updateSach = asyncHandler(async (req, res) => {
   if (namXuatBan !== undefined)
     item.namXuatBan = Number(namXuatBan) || item.namXuatBan;
   if (maNXB) item.maNXB = maNXB;
-  if (tacGia) item.tacGia = tacGia;
+  if (nguonGoc_tacGia) item.nguonGoc_tacGia = nguonGoc_tacGia;
   if (moTa) item.moTa = moTa;
 
   // Xử lý file mới nếu có

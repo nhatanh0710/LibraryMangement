@@ -12,7 +12,7 @@ const sachSchema = new mongoose.Schema(
       ref: "NhaXuatBan",
       required: true,
     },
-    tacGia: { type: String, required: true },
+    nguonGoc_tacGia: { type: String, required: true },
     soQuyenConLai: { type: Number, required: true, default: 1 },
     moTa: { type: String },
     hinhAnh: { type: String },

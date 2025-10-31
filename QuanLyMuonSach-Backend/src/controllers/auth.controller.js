@@ -84,9 +84,10 @@ export const login = asyncHandler(async (req, res) => {
 
   // prepare safe user object (omit sensitive fields)
   const safeUser = user.toObject();
+  safeUser.type = userType;
   delete safeUser.password;
   delete safeUser.refreshTokens;
-
+  safeUser.type = userType;
   res.json({
     success: true,
     data: {

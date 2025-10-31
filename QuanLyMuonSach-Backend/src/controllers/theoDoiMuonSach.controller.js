@@ -3,28 +3,101 @@ import TheoDoiMuonSach from "../models/theoDoiMuonSach.js";
 import DocGia from "../models/DocGia.js";
 import Sach from "../models/sach.js";
 
-// GET /api/theodoimuonsach - Lấy danh sách theo dõi mượn sách (có hỗ trợ tìm kiếm và phân trang)
+// // GET /api/theodoimuonsach - Lấy danh sách theo dõi mượn sách (có hỗ trợ tìm kiếm và phân trang)
+// export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
+//   const { page = 1, limit = 10, search } = req.query; // Lấy giá trị query từ URL
+//   const query = {};
+//   // Nếu có từ khóa search thì thêm điều kiện tìm kiếm
+//   if (search) {
+//     const re = new RegExp(search, "i"); // "i" = không phân biệt hoa thường
+//     query.$or = [{ maDocGia: re }, { maSach: re }]; // Tìm theo mã độc giả hoặc mã sách
+//   }
+//   // Xác định giới hạn và trang (ép kiểu sang số và đảm bảo >=1)
+//   const perPage = Math.max(1, Number(limit));
+//   const skip = (Math.max(1, Number(page)) - 1) * perPage;
+//   const [total, items] = await Promise.all([
+//     TheoDoiMuonSach.countDocuments(query),
+//     TheoDoiMuonSach.find(query)
+//       .populate("maDocGia", "maDocGia ten hoLot")
+//       .populate("maSach", "maSach tenSach tacGia")
+//       .skip(skip)
+//       .limit(perPage) // Giới hạn số kết quả trả về
+//       .sort({ createdAt: -1 }), // Sắp xếp theo ngày tạo mới nhất
+//   ]);
+//   // Trả kết quả về cho client
+//   res.json({
+//     success: true,
+//     data: items,
+//     meta: {
+//       total,
+//       page: Number(page),
+//       limit: perPage,
+//       totalPages: Math.ceil(total / perPage),
+//     },
+//   });
+// });
+
+// ở đầu file nếu chưa có
+import mongoose from "mongoose";
+import asyncHandler from "express-async-handler";
+import TheoDoiMuonSach from "../models/theoDoiMuonSach.js";
+import DocGia from "../models/DocGia.js";
+import Sach from "../models/sach.js";
+
+// GET /api/theodoimuonsach
 export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, search } = req.query; // Lấy giá trị query từ URL
+  const { page = 1, limit = 10, search, maDocGia } = req.query;
   const query = {};
-  // Nếu có từ khóa search thì thêm điều kiện tìm kiếm
-  if (search) {
-    const re = new RegExp(search, "i"); // "i" = không phân biệt hoa thường
-    query.$or = [{ maDocGia: re }, { maSach: re }]; // Tìm theo mã độc giả hoặc mã sách
+
+  // filter by maDocGia (supports _id or maDocGia code)
+  if (maDocGia) {
+    const q = String(maDocGia).trim();
+    // if looks like ObjectId -> match by object id
+    if (mongoose.Types.ObjectId.isValid(q)) {
+      query.maDocGia = q;
+    } else {
+      // try find DocGia by its code field (maDocGia)
+      const dg = await DocGia.findOne({ maDocGia: q }).select("_id").lean();
+      if (dg) {
+        query.maDocGia = dg._id;
+      } else {
+        // no docgia found by code -> force empty result
+        // alternatively you could search by embedded maDocGia string if you stored it
+        return res.json({
+          success: true,
+          data: [],
+          meta: {
+            total: 0,
+            page: Number(page),
+            limit: Number(limit),
+            totalPages: 0,
+          },
+        });
+      }
+    }
   }
-  // Xác định giới hạn và trang (ép kiểu sang số và đảm bảo >=1)
+
+  // optional text search across fields (keeps your original behavior)
+  if (search) {
+    const re = new RegExp(search, "i");
+    query.$or = query.$or
+      ? query.$or.concat([{ maDocGia: re }, { maSach: re }])
+      : [{ maDocGia: re }, { maSach: re }];
+  }
+
   const perPage = Math.max(1, Number(limit));
   const skip = (Math.max(1, Number(page)) - 1) * perPage;
+
   const [total, items] = await Promise.all([
     TheoDoiMuonSach.countDocuments(query),
     TheoDoiMuonSach.find(query)
-      .populate("maDocGia", "maDocGia ten hoLot")
+      .populate("maDocGia", "maDocGia hoLot ten")
       .populate("maSach", "maSach tenSach tacGia")
       .skip(skip)
-      .limit(perPage) // Giới hạn số kết quả trả về
-      .sort({ createdAt: -1 }), // Sắp xếp theo ngày tạo mới nhất
+      .limit(perPage)
+      .sort({ createdAt: -1 }),
   ]);
-  // Trả kết quả về cho client
+
   res.json({
     success: true,
     data: items,
