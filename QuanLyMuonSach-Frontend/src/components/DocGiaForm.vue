@@ -17,14 +17,26 @@
                 <input v-model="form.maDocGia" type="text" class="form-control" required />
               </div>
 
-              <div class="mb-3">
-                <label class="form-label">Họ tên</label>
-                <input v-model="form.hoTen" type="text" class="form-control" required />
+             <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label small">Họ Lót</label>
+                <input v-model="form.hoLot" class="form-control form-control-sm" required />
               </div>
+
+              <div class="col-6">
+                <label class="form-label small">Tên</label>
+                <input v-model="form.ten" class="form-control form-control-sm" required />
+              </div>
+            </div>
 
               <div class="mb-3">
                 <label class="form-label">Ngày sinh</label>
                 <input v-model="form.ngaySinh" type="date" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Giới tính</label>
+                <input v-model="form.phai" type="text" class="form-control" />
               </div>
 
               <div class="mb-3">
@@ -33,13 +45,8 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input v-model="form.email" type="email" class="form-control" />
-              </div>
-
-              <div class="mb-3">
                 <label class="form-label">Số điện thoại</label>
-                <input v-model="form.sdt" type="text" class="form-control" />
+                <input v-model="form.dienThoai" type="text" class="form-control" />
               </div>
             </div>
 
@@ -67,11 +74,12 @@ const emit = defineEmits(["close", "saved"]);
 
 const form = ref({
   maDocGia: "",
-  hoTen: "",
+  hoLot: "",
+  ten: "",
   ngaySinh: "",
   diaChi: "",
-  email: "",
-  sdt: "",
+  phai: "",
+  dienThoai: "",
 });
 const loading = ref(false);
 const isEdit = computed(() => !!props.initial?._id);
@@ -83,11 +91,12 @@ watch(
     else
       form.value = {
         maDocGia: "",
-        hoTen: "",
+        hoLot: "",
+        ten: "",
         ngaySinh: "",
         diaChi: "",
-        email: "",
-        sdt: "",
+        phai: "",
+        dienThoai: "",
       };
   },
   { immediate: true }

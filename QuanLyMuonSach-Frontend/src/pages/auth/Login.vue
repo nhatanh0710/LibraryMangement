@@ -1,7 +1,7 @@
 <template>
   <FormWrapper title="Đăng nhập">
     <form @submit.prevent="onSubmit">
-      <InputField v-model="account" label="Tài khoản (MSNV hoặc email)" placeholder="Nhập MSNV hoặc email" />
+      <InputField v-model="account" label="Tài khoản (MSNV hoặc NSDG)" placeholder="Nhập MSNV hoặc email" />
       <InputField v-model="password" type="password" label="Mật khẩu" placeholder="Nhập mật khẩu" />
       <div v-if="error" class="alert alert-danger py-1 small">{{ error }}</div>
 
@@ -10,7 +10,6 @@
       <div class="text-center mt-3">
         <router-link to="/register">Đăng ký độc giả</router-link>
         <span class="mx-2">|</span>
-        <router-link to="/register-staff">Đăng ký nhân viên</router-link>
       </div>
     </form>
   </FormWrapper>
@@ -36,10 +35,16 @@ async function onSubmit() {
   error.value = ''
   loading.value = true
   try {
-    // support msnv or email: pass as msnv for staff login; BE decides
+    //lấy MSNV hoặc MSDG
     await userStore.login(account.value, password.value)
-    const redirect = route.query.redirect || '/admin'
-    router.push(redirect)
+   const redirectQuery = route.query.redirect;
+if (redirectQuery) {
+  router.push(redirectQuery);
+} else {
+  // choose by user type
+  const dest = userStore.user?.type === 'DOCGIA' ? '/docgia/trang-chu' : '/admin';
+  router.push(dest);
+}
   } catch (err) {
     error.value = err.response?.data?.message || err.message || 'Đăng nhập thất bại'
   } finally {

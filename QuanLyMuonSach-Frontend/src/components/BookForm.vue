@@ -37,7 +37,7 @@
               <!-- Tác giả -->
               <div class="mb-2">
                 <label class="form-label">Tác giả</label>
-                <input v-model="form.tacGia" class="form-control" required />
+                <input v-model="form.nguonGoc_tacGia" class="form-control" required />
               </div>
 
             <!--NXB-->
@@ -139,7 +139,7 @@ const form = reactive({
   soQuyen: 1,
   namXuatBan: null,
   maNXB: null,
-  tacGia: '',
+  nguonGoc_tacGia: '',
   soQuyenConLai: 1,
   moTa: '',
   hinhAnh: ''
@@ -160,7 +160,7 @@ function resetFormToDefaults() {
     soQuyen: 1,
     namXuatBan: null,
     maNXB: null,
-    tacGia: '',
+    nguonGoc_tacGia: '',
     soQuyenConLai: 1,
     moTa: '',
     hinhAnh: ''

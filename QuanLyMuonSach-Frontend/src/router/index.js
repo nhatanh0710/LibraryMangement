@@ -6,8 +6,10 @@ import DocGiaLayout from "@/layouts/DocGia.layout.vue";
 import NhanVienLayout from "@/layouts/NhanVien.layout.vue";
 
 // ===== DocGia pages =====
-// import TrangChu from "@/pages/DocGia/TrangChu.vue";
-// import MuonSach from "@/pages/DocGia/MuonSach.vue";
+import TrangChu from "@/pages/DocGia/TrangChu.vue";
+import MuonSach from "@/pages/DocGia/MuonSach.vue";
+import ChiTietDocGia from "../pages/DocGia/ChiTietDocGia.vue";
+import ChiTietSach from "../pages/DocGia/ChiTietSach.vue";
 import RegisterDocGia from "@/pages/auth/RegisterDocGia.vue";
 
 // ===== Auth pages =====
@@ -27,16 +29,26 @@ const routes = [
   // === Trang Login mặc định khi khởi động ===
   { path: "/", redirect: "/login" },
 
-  // // === Độc giả ===
-  // {
-  //   path: "/docgia",
-  //   component: DocGiaLayout,
-  //   children: [
-  //     { path: "trang-chu", name: "TrangChu", component: TrangChu },
-  //     { path: "muon-sach", name: "MuonSach", component: MuonSach },
-  //     { path: "register", name: "RegisterDocGia", component: RegisterDocGia },
-  //   ],
-  // },
+  // === Độc giả ===
+  {
+    path: "/docgia",
+    component: DocGiaLayout,
+    children: [
+      { path: "trang-chu", name: "TrangChu", component: TrangChu },
+      { path: "muon-sach", name: "MuonSach", component: MuonSach },
+      {
+        path: "chi-tiet-doc-gia/:id",
+        name: "ChiTietDocGia",
+        component: ChiTietDocGia,
+      },
+      {
+        path: "chi-tiet-sach/:id",
+        name: "ChiTietSach",
+        component: ChiTietSach,
+      },
+      { path: "register", name: "RegisterDocGia", component: RegisterDocGia },
+    ],
+  },
 
   // === Nhân viên (Admin Panel) ===
   {
@@ -80,17 +92,27 @@ router.beforeEach((to, from, next) => {
   const store = useUserStore();
   const requiresAuth = to.matched.some((r) => r.meta?.requiresAuth);
 
-  // Nếu cần login mà chưa login -> chuyển đến /login
+  // not authenticated -> go to login (preserve redirect)
   if (requiresAuth && !store.isAuthenticated) {
     return next({ name: "Login", query: { redirect: to.fullPath } });
   }
 
-  // Nếu đã login mà cố vào /login -> chuyển về /admin
+  // already logged in and trying to visit /login -> redirect to proper home
   if (to.name === "Login" && store.isAuthenticated) {
-    return next("/admin");
+    // choose destination based on user type
+    const dest = store.user?.type === "DOCGIA" ? "/docgia/trang-chu" : "/admin";
+    return next(dest);
+  }
+
+  // protect admin routes: if route under /admin and user is DOCGIA -> redirect
+  if (to.path.startsWith("/admin") && store.isAuthenticated) {
+    if (store.user?.type === "DOCGIA") {
+      return next("/docgia/trang-chu");
+    }
   }
 
   next();
 });
+
 
 export default router;

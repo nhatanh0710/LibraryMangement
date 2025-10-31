@@ -1,6 +1,8 @@
 <template>
   <div class="docgia-layout d-flex flex-column min-vh-100">
-    <Header />
+     <header class="sticky-top shadow-sm bg-white z-3">
+      <Header />
+    </header>
 
     <main class="container py-4">
       <router-view />

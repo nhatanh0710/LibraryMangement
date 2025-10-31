@@ -30,7 +30,7 @@
             <td>{{ book.tenSach }}</td>
             <td>{{ book.namXuatBan ?? '-' }}</td>
             <td>{{ book.soQuyen ?? '-' }}</td>
-            <td>{{ book.tacGia ?? '-' }}</td>
+            <td>{{ book.nguonGoc_tacGia ?? '-' }}</td>
             <td class="text-end">
               <button class="btn btn-sm btn-primary me-2" @click="openEdit(book)" :disabled="loading">Sửa</button>
               <button class="btn btn-sm btn-danger" @click="handleDeleteBook(book)" :disabled="loading">Xóa</button>

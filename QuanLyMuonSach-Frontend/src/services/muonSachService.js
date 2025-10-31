@@ -10,6 +10,10 @@ const unwrapPayload = (promise) =>
 export const fetchMuonSachs = (page = 1, limit = 10) =>
   unwrapPayload(api.get(`/theodoimuonsach?page=${page}&limit=${limit}`));
 
+export const fetchMuonSachTheoDocGia = (page = 1, limit = 10, filters = {}) => {
+  const params = { page, limit, ...filters }; // filters can include maDocGia, search
+  return api.get("/theodoimuonsach", { params });
+};
 /** Lấy chi tiết một phiếu mượn */
 export const fetchMuonSach = (id) =>
   unwrapPayload(api.get(`/theodoimuonsach/${id}`));
