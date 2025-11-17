@@ -1,21 +1,22 @@
 <template>
   <div class="container py-3">
+    <!-- Header + nút Thêm -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h3 class="mb-0">Theo dõi mượn sách</h3>
-      <div>
-        <button class="btn btn-primary me-2" @click="openAdd">Thêm phiếu mượn</button>
-      </div>
+      <button class="btn btn-primary" @click="openAdd">Thêm phiếu mượn</button>
     </div>
 
+    <!-- Loading spinner -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border" role="status"></div>
     </div>
 
+    <!-- Table -->
     <div v-else>
       <table class="table table-striped align-middle" v-if="records.length">
         <thead class="table-dark">
           <tr>
-            <th style="width:48px">#</th>
+            <th>#</th>
             <th>Độc giả</th>
             <th>Sách</th>
             <th>Ngày mượn</th>
@@ -45,9 +46,9 @@
           </tr>
         </tbody>
       </table>
-
       <div v-else class="alert alert-info">Không có bản ghi mượn/thông tin nào.</div>
 
+      <!-- Pagination -->
       <Pagination
         v-if="totalPages > 1"
         :page="page"
@@ -60,54 +61,54 @@
       />
     </div>
 
-    <TheoDoiMuonSachForm
-      v-if="showForm"
-      :initial="selected"
-      :docGias="docGias"
+    <!-- Form Overlay -->
+     <TheoDoiMuonSachForm
+      :role="role"
+      :initial="selectedBorrow"
+      :doc-gias="docGias"
       :saches="saches"
-      :docGiasLoading="loadingDocGias"
-      :sachesLoading="loadingSaches"
-      @close="closeForm"
+      :doc-gias-loading="loadingDocGias"
+      :saches-loading="loadingSaches"
+      :user-info="userInfo"
+      :visible="showForm"
       @saved="onSaved"
-      @request-reload="onRequestReload"
+      @cancel="closeForm"
+      @update:visible="showForm = $event"
     />
   </div>
 </template>
 
 <script setup>
-/*
-  Parent page for TheoDoiMuonSachForm:
-  - provides docGias/saches & loading flags to form
-  - handles request-reload emitted by form (server-side search)
-  - loads list of borrow records
-*/
-
 import { ref, onMounted } from "vue";
-import TheoDoiMuonSachForm from "@/components/TheoDoiMuonSachForm.vue";
-import Pagination from "@/components/Pagination.vue";
-import loadData from "@/utils/loadData.js"; // your existing util
+import TheoDoiMuonSachForm from "@/components/MuonSach/TheoDoiMuonSachForm.vue";
+import Pagination from "@/components/Home/Pagination.vue";
+import Overlay from "@/components/Overlay.vue";
+import loadData from "@/utils/loadData.js";
 import * as TheoDoiService from "@/services/muonSachService";
 import * as DocGiaService from "@/services/docGiaService";
-import * as SachService from "@/services/bookService"; // note file name in your project
+import * as SachService from "@/services/bookService";
 
-/* records table state */
+// Table + Pagination
 const records = ref([]);
 const loading = ref(false);
-const showForm = ref(false);
-const selected = ref(null);
-
 const page = ref(1);
 const limit = ref(10);
 const total = ref(0);
 const totalPages = ref(0);
 
-/* lookup lists for selects */
-const docGias = ref([]); // items for AsyncSelect
+// Overlay / Form
+const showForm = ref(false);
+const selectedBorrow = ref(null);
+const role = ref("admin"); // ví dụ admin, có thể lấy từ userInfo
+
+// Lookup lists cho selects
+const docGias = ref([]);
 const saches = ref([]);
 const loadingDocGias = ref(false);
 const loadingSaches = ref(false);
+const userInfo = ref({}); // thông tin user
 
-/* load main borrow records (existing util usage) */
+// --- Load dữ liệu ---
 async function loadTheoDoi(p = 1) {
   try {
     await loadData(TheoDoiService.fetchMuonSachs, records, p, limit.value, {
@@ -122,19 +123,15 @@ async function loadTheoDoi(p = 1) {
   }
 }
 
-/* load initial small lookup lists so selects have something to show quickly */
+// Load lookup lists
 async function loadLookups() {
   try {
     loadingDocGias.value = true;
     loadingSaches.value = true;
-
-    // use fetchDocGias/fetchBooks to load an initial small page (adjust limit as needed)
     const [dgRes, sachRes] = await Promise.all([
       DocGiaService.fetchDocGias(1, 50),
       SachService.fetchBooks(1, 50)
     ]);
-
-    // unwrapPayload returns body { success, data, meta } so items are in .data
     docGias.value = dgRes?.data || dgRes || [];
     saches.value = sachRes?.data || sachRes || [];
   } catch (err) {
@@ -147,40 +144,35 @@ async function loadLookups() {
   }
 }
 
-/* open / close form */
+// --- Form open/close ---
 function openAdd() {
-  selected.value = null;
+  selectedBorrow.value = null;
   showForm.value = true;
+   
 }
 function openEdit(r) {
-  selected.value = r;
+  selectedBorrow.value = r;
   showForm.value = true;
 }
 function closeForm() {
-  selected.value = null;
   showForm.value = false;
+  selectedBorrow.value = null;
 }
 
-/* when form emits saved, update table & close */
+// --- Handle saved ---
 function onSaved(saved) {
-  if (!saved) {
-    closeForm();
-    return;
+  if (saved) {
+    const idx = records.value.findIndex(x => x._id === saved._id);
+    if (idx !== -1) records.value.splice(idx, 1, saved);
+    else records.value.unshift(saved);
+    if (records.value.length > limit.value) records.value.splice(limit.value);
   }
-  const idx = records.value.findIndex(x => x._id === saved._id);
-  if (idx !== -1) records.value.splice(idx, 1, saved);
-  else records.value.unshift(saved);
-
-  if (records.value.length > limit.value) records.value.splice(limit.value);
   closeForm();
 }
 
-/* delete handler */
+// --- Delete handler ---
 async function handleDelete(r) {
-  if (!r || !r._id) {
-    alert("Bản ghi không hợp lệ");
-    return;
-  }
+  if (!r?._id) return alert("Bản ghi không hợp lệ");
   if (!confirm(`Bạn có chắc muốn xóa phiếu mượn của độc giả "${displayDocGia(r.maDocGia)}"?`)) return;
   try {
     loading.value = true;
@@ -195,23 +187,17 @@ async function handleDelete(r) {
   }
 }
 
-/* helpers to format display */
+// --- Helpers hiển thị ---
 function formatDate(iso) {
   if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleString();
-  } catch {
-    return iso;
-  }
+  try { return new Date(iso).toLocaleString(); } catch { return iso; }
 }
-
 function displayDocGia(maDocGia) {
   if (!maDocGia) return "";
   if (typeof maDocGia === "object") return maDocGia.hoLot ? `${maDocGia.hoLot} ${maDocGia.ten}` : maDocGia.ten || maDocGia._id;
   const found = docGias.value.find(d => d._id === maDocGia || d.id === maDocGia || d.maDocGia === maDocGia);
   return found ? (found.hoLot ? `${found.hoLot} ${found.ten}` : found.ten || found.name) : maDocGia;
 }
-
 function displaySach(maSach) {
   if (!maSach) return "";
   if (typeof maSach === "object") return maSach.tenSach || maSach.ten || maSach._id;
@@ -219,7 +205,7 @@ function displaySach(maSach) {
   return found ? (found.tenSach || found.ten) : maSach;
 }
 
-/* pagination handlers */
+// --- Pagination ---
 function changePage(p) {
   const np = Number(p) || 1;
   if (np === page.value) return;
@@ -238,52 +224,7 @@ function onPageChange({ page: p, limit: l } = {}) {
   if (l) changeLimit(l);
 }
 
-/* --- server-side search handling (debounced) --- */
-/* simple debounce util */
-function debounce(fn, wait = 250) {
-  let t = null;
-  return function (...args) {
-    clearTimeout(t);
-    t = setTimeout(() => fn.apply(this, args), wait);
-  };
-}
-
-const doSearchDocGias = debounce(async (q) => {
-  loadingDocGias.value = true;
-  try {
-    // call backend search endpoint; unwrapPayload returns body => array in .data
-    const res = await DocGiaService.searchDocGias(q || "", 1, 30);
-    docGias.value = res?.data || [];
-  } catch (e) {
-    console.error("searchDocGias", e);
-    docGias.value = [];
-  } finally {
-    loadingDocGias.value = false;
-  }
-}, 200);
-
-const doSearchSaches = debounce(async (q) => {
-  loadingSaches.value = true;
-  try {
-    const res = await SachService.searchBooks(q || "", 1, 30);
-    saches.value = res?.data || [];
-  } catch (e) {
-    console.error("searchBooks", e);
-    saches.value = [];
-  } finally {
-    loadingSaches.value = false;
-  }
-}, 200);
-
-/* handler passed into form: form emits { type: 'docgia'|'sach', q }  */
-function onRequestReload(payload) {
-  if (!payload || !payload.type) return;
-  const q = payload.q || "";
-  if (payload.type === "docgia") doSearchDocGias(q);
-  else if (payload.type === "sach") doSearchSaches(q);
-}
-
-/* initial mount */
+// --- Mount ---
 onMounted(async () => {
   await loadLookups();
   loadTheoDoi(1);

@@ -78,10 +78,10 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
-import AccountPanel from '@/components/AccountPanel.vue'
+import AccountPanel from '@/components/Home/AccountPanel.vue'
 import BorrowHistory from '@/components/BorrowHistory.vue' // if needed
 // component name for your form (you have TheoDoiMuonSachForm.vue)
-import TheoDoiMuonSachForm from '@/components/TheoDoiMuonSachForm.vue'
+import TheoDoiMuonSachForm from '@/components/MuonSach/TheoDoiMuonSachForm.vue'
 
 const route = useRoute()
 const router = useRouter()

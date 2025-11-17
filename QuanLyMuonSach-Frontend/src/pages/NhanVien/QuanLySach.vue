@@ -64,8 +64,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import BookForm from '@/components/BookForm.vue'
-import Pagination from '@/components/Pagination.vue'
+import BookForm from '@/components/Sach/BookForm.vue'
+import Pagination from '@/components/Home/Pagination.vue'
 import loadData from '@/utils/loadData.js'
 import * as bookService from '@/services/bookService'
 

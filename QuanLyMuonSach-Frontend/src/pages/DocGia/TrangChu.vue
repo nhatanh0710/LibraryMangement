@@ -45,22 +45,26 @@
     </div>
 
     <!-- Modal mượn sách -->
-    <TheoDoiMuonSach
-      v-if="borrowModalOpen"
-      :book="selectedBook"
-      :visible="borrowModalOpen"
-      @close="borrowModalOpen = false"
-      @success="onBorrowSuccess"
-    />
+   <TheoDoiMuonSach
+  v-if="borrowModalOpen"
+  :initial="formInitial"
+  :docGias="[userStore.user]"   
+  :saches="saches"
+  @close="borrowModalOpen = false"
+  @saved="onBorrowSuccess"
+/>
+
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import BookCard from '@/components/BookCard.vue'
-import TheoDoiMuonSach from '@/components/TheoDoiMuonSachForm.vue'
+import BookCard from '@/components/Sach/BookCard.vue'
+import TheoDoiMuonSach from '@/components/MuonSach/TheoDoiMuonSachForm.vue'
 import api from '@/services/api'
+import { useUserStore } from '@/stores/users'
 
+const userStore = useUserStore()
 const banners = ref([
   { image: '/images/banner1.jpg', title: 'Harry Potter', author: 'J.K. Rowling' },
   { image: '/images/banner2.jpg', title: 'Doraemon', author: 'Fujiko F. Fujio' },
@@ -72,6 +76,8 @@ const loading = ref(false)
 const borrowModalOpen = ref(false)
 const selectedBook = ref(null)
 const page = ref(1)
+const saches = ref([]) 
+const formInitial = ref({})
 
 onMounted(async () => {
   loading.value = true
@@ -85,11 +91,16 @@ onMounted(async () => {
   }
 })
 
-
 function openBorrow(book) {
   selectedBook.value = book
+  saches.value = [book] // chỉ có 1 quyển đang chọn
+  formInitial.value = {
+    maDocGia: userStore.user?._id, // id độc giả đang đăng nhập
+    maSach: book._id || book.maSach,
+  }
   borrowModalOpen.value = true
 }
+
 
 function onBorrowSuccess() {
   window.location.reload()

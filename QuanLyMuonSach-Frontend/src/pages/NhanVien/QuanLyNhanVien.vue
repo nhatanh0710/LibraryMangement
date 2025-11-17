@@ -74,7 +74,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import NhanVienForm from "@/components/NhanVienForm.vue";
-import Pagination from "@/components/Pagination.vue";
+import Pagination from "@/components/Home/Pagination.vue";
 import loadData from "@/utils/loadData.js";
 import * as NhanVienService from "@/services/nhanVienService";
 

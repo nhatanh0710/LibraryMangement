@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import TheoDoiMuonSachForm from '@/components/TheoDoiMuonSachForm.vue'
+import TheoDoiMuonSachForm from '@/components/MuonSach/TheoDoiMuonSachForm.vue'
 import BorrowHistory from '@/components/BorrowHistory.vue'
 
 function onBorrowSuccess(){

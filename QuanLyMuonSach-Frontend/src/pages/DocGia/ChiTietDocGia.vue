@@ -19,7 +19,8 @@
           <button class="btn btn-outline-secondary btn-sm" @click="openChangePassword">Đổi mật khẩu</button>
         </div>
 
-        <BorrowHistory />
+        <!-- 📚 Lịch sử mượn -->
+        <BorrowHistory v-if="user?._id || user?.maDocGia" :maDocGia="user._id || user.maDocGia" />
       </div>
 
       <div v-else class="text-muted">Bạn chưa đăng nhập.</div>
@@ -27,16 +28,13 @@
   </div>
 
   <DocGiaForm v-if="showEdit" :initial="user" @saved="onSaved" @close="closeEdit" />
-<!-- <ChangePasswordModal v-if="showPw" :userId="user._id || user.id" @changed="onPwChanged" @close="closeChangePassword" /> -->
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import DocGiaForm from '@/components/DocGiaForm.vue'
-
-//import ChangePasswordModal from '@/components/ChangePasswordModal.vue'
+import BorrowHistory from '@/components/BorrowHistory.vue'
 import { useUserStore } from '@/stores/users'
-import BorrowHistory from '../../components/BorrowHistory.vue'
 
 const userStore = useUserStore()
 const raw = localStorage.getItem('user')
@@ -49,16 +47,16 @@ const showPw = ref(false)
 
 function formatDate(iso) {
   if (!iso) return ''
-  try { return new Date(iso).toLocaleDateString() } catch { return iso }
+  try { return new Date(iso).toLocaleDateString('vi-VN') } catch { return iso }
 }
 
 function openEdit() { showEdit.value = true }
 function closeEdit() { showEdit.value = false }
+
 function openChangePassword() { showPw.value = true }
 function closeChangePassword() { showPw.value = false }
 
 function onSaved(saved) {
-  // saved might be API response shape; try to normalize
   const newUser = saved?.data || saved || null
   const final = newUser || { ...user, ...saved }
   localStorage.setItem('user', JSON.stringify(final))
@@ -66,16 +64,10 @@ function onSaved(saved) {
   showEdit.value = false
   alert('Cập nhật thông tin thành công')
 }
-
-function onPwChanged() {
-  showPw.value = false
-  alert('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.')
-  // optional: force logout
-  userStore.logout?.()
-  location.href = '/login'
-}
 </script>
 
 <style scoped>
-.card { border-radius: 10px; }
+.card {
+  border-radius: 10px;
+}
 </style>

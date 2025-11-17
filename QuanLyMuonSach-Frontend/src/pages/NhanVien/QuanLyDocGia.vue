@@ -64,7 +64,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import DocGiaForm from '@/components/DocGiaForm.vue'
-import Pagination from '@/components/Pagination.vue'
+import Pagination from '@/components/Home/Pagination.vue'
 import loadData from '@/utils/loadData.js'
 import * as DocGiaService from '@/services/docGiaService.js'
 

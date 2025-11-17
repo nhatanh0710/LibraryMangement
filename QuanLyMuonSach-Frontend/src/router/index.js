@@ -40,6 +40,7 @@ const routes = [
         path: "chi-tiet-doc-gia/:id",
         name: "ChiTietDocGia",
         component: ChiTietDocGia,
+        props: true,
       },
       {
         path: "chi-tiet-sach/:id",

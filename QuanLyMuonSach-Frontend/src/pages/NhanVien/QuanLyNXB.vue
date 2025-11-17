@@ -57,7 +57,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import NXBForm from '@/components/NXBForm.vue'
-import Pagination from '@/components/Pagination.vue'
+import Pagination from '@/components/Home/Pagination.vue'
 import loadData from '@/utils/loadData.js'
 import * as NXBService from '@/services/nxbService.js'
 

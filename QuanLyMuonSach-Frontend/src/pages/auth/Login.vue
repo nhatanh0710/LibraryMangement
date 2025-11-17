@@ -19,8 +19,8 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/users'
-import InputField from '@/components/InputField.vue'
-import SubmitButton from '@/components/SubmitButton.vue'
+import InputField from '@/components/Home/InputField.vue'
+import SubmitButton from '@/components/Home/SubmitButton.vue'
 import FormWrapper from '@/components/FormWrapper.vue'
 
 const account = ref('')
