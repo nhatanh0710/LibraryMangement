@@ -8,7 +8,19 @@
             <h5 class="card-title">Mượn sách</h5>
 
             <!-- Nếu bạn có component form tên TheoDoiMuonSachForm.vue, dùng nó -->
-            <TheoDoiMuonSachForm @success="onBorrowSuccess" />
+             <TheoDoiMuonSachForm
+              role="user"
+              :visible="true"
+              :initial="null"
+              :doc-gias="[]"
+              :saches="[]"
+              :doc-gias-loading="false"
+              :saches-loading="false"
+              :user-info="{}"
+              @saved="onBorrowSuccess"
+              @cancel="() => {}"
+            />
+
           </div>
         </div>
       </div>

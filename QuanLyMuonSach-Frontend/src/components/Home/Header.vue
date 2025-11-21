@@ -5,7 +5,7 @@
       <router-link class="navbar-brand fw-bold text-white" to="/">
          NA Library
       </router-link>
-
+      
       <button
         class="navbar-toggler"
         type="button"
@@ -19,16 +19,15 @@
       </button>
 
       <div class="collapse navbar-collapse" id="topNavbar">
-        <form class="d-flex ms-auto my-2 my-lg-0" @submit.prevent="onSearch">
-          <input
-            v-model="q"
-            class="form-control form-control-sm me-2"
-            type="search"
-            placeholder="Tìm sách, tác giả..."
-            aria-label="Search"
+         <div class="d-flex align-items-center ms-auto me-3" style="min-width: 300px;">
+          <SearchBar 
+            placeholder="Tìm sách, nhà xuất bản..."
+            size="sm"
+            :auto-search="true"
+            @search="onSearch"
+            @select="onItemSelect"
           />
-          <button class="btn btn-sm btn-light" type="submit">Tìm</button>
-        </form>
+        </div>
 
         <ul class="navbar-nav ms-3">
           <li class="nav-item" v-if="!user">
@@ -68,18 +67,21 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/users'
+import SearchBar from '@/components/home/SearchBar.vue'
+
 
 const q = ref('')
 const router = useRouter()
 const userStore = useUserStore()
 const user = computed(() => userStore.user)
 
-function onSearch() {
-  // simple route to search page (implement page later)
-  if (!q.value) return
-  router.push({ name: 'TrangChu', query: { q: q.value } })
+function onSearch(searchData) {
+  console.log('Tìm kiếm:', searchData)
 }
 
+function onItemSelect(item) {
+  console.log('Item được chọn:', item)
+}
 function logout() {
   userStore.logout()
   router.push('/login')

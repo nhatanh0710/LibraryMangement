@@ -2,9 +2,11 @@
   <div v-if="visible" class="form-overlay">
     <div class="form-container">
       <form @submit.prevent="submitForm">
+        
+        <!-- Tiêu đề: tạo mới hoặc chỉnh sửa -->
         <h5 class="mb-3">{{ isEdit ? 'Sửa phiếu mượn' : 'Thêm phiếu mượn' }}</h5>
 
-        <!-- ĐỘC GIẢ -->
+        <!-- Chọn / hiển thị độc giả -->
         <BorrowerSection
           :role="role"
           :is-edit="isEdit"
@@ -15,17 +17,18 @@
           @update="(v) => (form.maDocGia = v)"
         />
 
-        <!-- SÁCH -->
+        <!-- Chọn / hiển thị sách -->
         <BookSection
           :role="role"
           :is-edit="isEdit"
           :initial="initial"
           :saches="saches"
           :loading="sachesLoading"
+          :selected-book="selectedBook"
           @update="(v) => (form.maSach = v)"
         />
 
-        <!-- NGÀY MƯỢN / TRẢ -->
+        <!-- Nhập ngày mượn / trả -->
         <BorrowDatesSection
           :role="role"
           :is-edit="isEdit"
@@ -33,7 +36,7 @@
           @update="updateDates"
         />
 
-        <!-- TRẠNG THÁI -->
+        <!-- Trạng thái phiếu (user readonly) -->
         <BorrowStatusSection
           :role="role"
           v-model="form.trangThai"
@@ -42,13 +45,14 @@
         <!-- Hiển thị lỗi -->
         <div v-if="error" class="alert alert-danger py-1">{{ error }}</div>
 
-        <!-- Nút Hủy / Lưu -->
+        <!-- Nút lưu / hủy -->
         <div class="d-flex justify-content-end mt-3">
           <button type="button" class="btn btn-secondary me-2" @click="cancel">Hủy</button>
           <button type="submit" class="btn btn-primary" :disabled="submitting">
             {{ submitting ? 'Đang xử lý...' : 'Lưu' }}
           </button>
         </div>
+
       </form>
     </div>
   </div>
@@ -62,31 +66,28 @@ import BorrowDatesSection from "./BorrowDatesSection.vue";
 import BorrowStatusSection from "./BorrowStatusSection.vue";
 import * as TheoDoiService from "@/services/muonSachService";
 
-// Props
+// Nhận dữ liệu từ cha
 const props = defineProps({
-  role: { type: String, required: true },
-  initial: { type: Object, default: null },
+  role: { type: String, required: true },     // admin / user
+  initial: { type: Object, default: null },   // dữ liệu khi sửa
   docGias: { type: Array, default: () => [] },
   saches: { type: Array, default: () => [] },
   docGiasLoading: Boolean,
   sachesLoading: Boolean,
   userInfo: Object,
-  visible: { type: Boolean, default: false }
+  visible: { type: Boolean, default: false },
+  selectedBook: { type: Object, default: null } // Thêm prop nhận sách đã chọn từ BookCard
 });
 
-// Emits
-const emit = defineEmits([
-  "saved",
-  "cancel",
-  "update:visible"
-]);
+// Emit về cha
+const emit = defineEmits(["saved", "cancel", "update:visible"]);
 
-// State
+// Trạng thái phụ
 const isEdit = computed(() => !!props.initial);
 const error = ref("");
 const submitting = ref(false);
 
-// Form model
+// Model của form
 const form = reactive({
   maDocGia: "",
   maSach: "",
@@ -96,15 +97,25 @@ const form = reactive({
   trangThai: "CHỜ DUYỆT",
 });
 
-// Watch visible để debug
-watch(
-  () => props.visible,
-  (visible) => {
-    console.log('🔴 Form visible:', visible);
+// Theo dõi visible để reset form khi mở
+watch(() => props.visible, v => {
+  if (v && !isEdit.value) {
+    // Khi mở form tạo mới, tự động set sách nếu có selectedBook
+    if (props.selectedBook && props.selectedBook._id) {
+      form.maSach = props.selectedBook._id;
+    }
+    
+    // Tự động set độc giả nếu là user
+    if (props.role === "user" && props.userInfo && props.userInfo._id) {
+      form.maDocGia = props.userInfo._id;
+    }
+    
+    // Tự động set ngày mượn là hôm nay
+    form.ngayMuon = new Date().toISOString().split('T')[0];
   }
-);
+});
 
-// Load dữ liệu khi edit
+// Khi sửa → load dữ liệu ban đầu
 watch(
   () => props.initial,
   (v) => {
@@ -122,7 +133,18 @@ watch(
   { immediate: true }
 );
 
-// Reset form
+// Theo dõi selectedBook để cập nhật form
+watch(
+  () => props.selectedBook,
+  (book) => {
+    if (book && book._id && !isEdit.value && props.visible) {
+      form.maSach = book._id;
+    }
+  },
+  { immediate: true }
+);
+
+// Reset form về trạng thái mặc định
 function resetForm() {
   form.maDocGia = "";
   form.maSach = "";
@@ -133,20 +155,30 @@ function resetForm() {
   error.value = "";
 }
 
-// Cập nhật ngày
+// Nhận ngày từ BorrowDatesSection
 function updateDates(dates) {
   Object.assign(form, dates);
 }
 
-// Validate
+// Validate trước khi gửi API
 function validate() {
   if (!form.maDocGia) return "Chưa chọn độc giả";
   if (!form.maSach) return "Chưa chọn sách";
   if (!form.ngayDuKienTra) return "Chưa chọn ngày dự kiến trả";
+  
+  // Validate ngày dự kiến trả phải sau ngày mượn
+  if (form.ngayMuon && form.ngayDuKienTra) {
+    const ngayMuon = new Date(form.ngayMuon);
+    const ngayDuKienTra = new Date(form.ngayDuKienTra);
+    if (ngayDuKienTra <= ngayMuon) {
+      return "Ngày dự kiến trả phải sau ngày mượn";
+    }
+  }
+  
   return "";
 }
 
-// Submit form
+// Gửi dữ liệu lên server
 async function submitForm() {
   error.value = validate();
   if (error.value) return;
@@ -164,10 +196,14 @@ async function submitForm() {
     };
 
     let savedData;
+
+    // Nếu đang sửa → gọi update
     if (isEdit.value) {
       const res = await TheoDoiService.updateMuonSach(props.initial._id, payload);
       savedData = res.data;
-    } else {
+    } 
+    // Nếu tạo mới → gọi create
+    else {
       const res = await TheoDoiService.createMuonSach(payload);
       savedData = res.data;
     }
@@ -175,7 +211,7 @@ async function submitForm() {
     emit("saved", savedData);
     close();
   } catch (err) {
-    console.error('Submit error:', err);
+    console.error("Submit error:", err);
     error.value = err?.response?.data?.message || "Có lỗi xảy ra khi lưu dữ liệu";
   } finally {
     submitting.value = false;
@@ -188,7 +224,7 @@ function cancel() {
   close();
 }
 
-// Đóng form
+// Đóng form + reset dữ liệu
 function close() {
   emit("update:visible", false);
   resetForm();

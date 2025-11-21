@@ -10,16 +10,19 @@
             </div>
 
             <div class="modal-body">
+              <!-- input Mã NXB -->
               <div class="mb-2">
                 <label class="form-label">Mã NXB</label>
                 <input v-model="form.maNXB" class="form-control" required />
               </div>
 
+              <!-- input Tên NXB -->
               <div class="mb-2">
                 <label class="form-label">Tên NXB</label>
                 <input v-model="form.tenNXB" class="form-control" required />
               </div>
 
+              <!-- input Địa chỉ -->
               <div class="mb-2">
                 <label class="form-label">Địa chỉ</label>
                 <input v-model="form.diaChi" class="form-control" />
@@ -44,44 +47,28 @@ import { createNXB, updateNXB } from '@/services/nxbService'
 const props = defineProps({ initial: { type: Object, default: null } })
 const emit = defineEmits(['close', 'saved'])
 
-const form = reactive({
-  maNXB: '',
-  tenNXB: '',
-  diaChi: ''
-})
-
+// state form
+const form = reactive({ maNXB: '', tenNXB: '', diaChi: '' })
 const isEdit = computed(() => !!props.initial && !!props.initial._id)
 
-// clone helper (shallow is enough here)
-const safeClone = (obj) => {
-  if (!obj) return null
-  try { return JSON.parse(JSON.stringify(obj)) } catch (e) { return { ...obj } }
-}
+// helper clone để tránh mutate trực tiếp props
+const safeClone = (obj) => { if (!obj) return null; try { return JSON.parse(JSON.stringify(obj)) } catch(e) { return {...obj} } }
 
-// watch props to fill form when initial changes (modal reuse)
-watch(
-  () => props.initial,
-  (val) => {
-    if (!val) {
-      Object.assign(form, { maNXB: '', tenNXB: '', diaChi: '' })
-      return
-    }
-    const copy = safeClone(val) || {}
-    Object.assign(form, { ...form, ...copy })
-  },
-  { immediate: true }
-)
+// watch props.initial để populate form khi modal mở lại
+watch(() => props.initial, (val) => {
+  if (!val) Object.assign(form, { maNXB:'', tenNXB:'', diaChi:'' });
+  else Object.assign(form, safeClone(val) || {});
+}, { immediate: true })
 
+// submit create/update
 async function submit() {
   try {
-    const payload = { ...form }
-    const nxbObj = isEdit.value
-      ? await updateNXB(props.initial._id, payload)
-      : await createNXB(payload)
-    emit('saved', nxbObj)
-  } catch (err) {
-    console.error(err)
-    alert(err?.response?.data?.message || 'Lỗi khi lưu NXB')
+    const payload = { ...form };
+    const nxbObj = isEdit.value ? await updateNXB(props.initial._id, payload) : await createNXB(payload);
+    emit('saved', nxbObj);
+  } catch(err) {
+    console.error(err);
+    alert(err?.response?.data?.message || 'Lỗi khi lưu NXB');
   }
 }
 </script>
@@ -97,3 +84,11 @@ async function submit() {
   z-index:9999;
 }
 </style>
+
+<!--
+Ghi chú:
+- Modal thêm/sửa Nhà xuất bản (NXB)
+- Props initial để xác định edit hay thêm mới
+- Form reactive, watch để populate dữ liệu
+- Submit gọi service create hoặc update, emit saved
+-->

@@ -1,10 +1,12 @@
 <template>
   <div>
+    <!-- header với title slot và actions slot -->
     <div class="d-flex justify-content-between align-items-center mb-2">
       <div><slot name="title"></slot></div>
       <div><slot name="actions"></slot></div>
     </div>
 
+    <!-- bảng dữ liệu -->
     <table class="table table-sm table-hover">
       <thead class="table-light">
         <tr>
@@ -22,6 +24,7 @@
             <slot name="row-actions" :row="row"></slot>
           </td>
         </tr>
+        <!-- thông báo khi không có dữ liệu -->
         <tr v-if="rows.length === 0">
           <td :colspan="columns.length + (hasActions ? 1 : 0)" class="text-center text-muted">
             Không có dữ liệu
@@ -40,6 +43,7 @@ const props = defineProps({
   hasActions: { type: Boolean, default: true }
 })
 
+// helper lấy giá trị theo key, hỗ trợ nested key dạng 'a.b.c'
 function getCell(row, col) {
   if (!col || !col.key) return ''
   const parts = String(col.key).split('.')
@@ -55,3 +59,13 @@ function getCell(row, col) {
 <style scoped>
 .table td, .table th { vertical-align: middle; }
 </style>
+
+<!--
+Ghi chú:
+- Component DataTable tái sử dụng cho các bảng.
+- columns: array với { key, label, render? }
+- rows: dữ liệu hiển thị
+- hasActions: show slot 'row-actions'
+- getCell hỗ trợ nested key 'parent.child'
+- Slots: title, actions, row-actions
+-->

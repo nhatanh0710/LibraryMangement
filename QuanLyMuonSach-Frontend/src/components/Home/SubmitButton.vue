@@ -12,6 +12,7 @@
 <script setup>
 import { computed } from 'vue'   // <-- bắt buộc
 
+// ✅ Định nghĩa props để tái sử dụng
 const props = defineProps({
   label: { type: String, default: 'Lưu' },
   variant: { type: String, default: 'primary' }, // primary / success / danger
@@ -19,6 +20,7 @@ const props = defineProps({
   disabled: { type: Boolean, default: false }
 })
 
+// ✅ Tính lớp CSS dựa trên variant
 const variantClass = computed(() => {
   if (props.variant === 'primary') return 'btn-primary'
   if (props.variant === 'success') return 'btn-success'

@@ -2,25 +2,25 @@
   <div class="mb-3">
     <label class="form-label">Độc giả</label>
 
-    <!-- USER: luôn hiển thị tên user -->
+    <!-- User: luôn hiển thị thông tin chính mình, không được chọn -->
     <div v-if="isUser" class="form-control bg-light">
       {{ userDisplay }}
     </div>
 
-    <!-- ADMIN + SỬA: hiển thị text -->
+    <!-- Admin khi sửa: chỉ xem lại độc giả đã chọn -->
     <div v-else-if="isAdmin && isEdit" class="form-control bg-light">
       {{ displayInitial }}
     </div>
 
-    <!-- ADMIN + TẠO: chọn qua AsyncSelect -->
+    <!-- Admin khi tạo mới: được chọn độc giả -->
     <div v-else>
       <AsyncSelect
         :items="docGias"
         :loading="loading"
-        :model-value="model" 
+        :model-value="model"
         placeholder="Tìm độc giả..."
         :display-fn="formatDocGia"
-        @update:model-value="onModelUpdate" 
+        @update:model-value="onModelUpdate"
         @search="q => $emit('search', q)"
       />
     </div>
@@ -32,47 +32,61 @@ import { computed, ref, watch } from "vue";
 import AsyncSelect from "@/components/AsyncSelect.vue";
 
 const props = defineProps({
-  role: String,
-  isEdit: Boolean,
-  initial: Object,
-  docGias: Array,
+  role: String,         // admin hoặc user
+  isEdit: Boolean,      // đang sửa hay đang tạo mới
+  initial: Object,      // dữ liệu ban đầu khi sửa
+  docGias: Array,       // danh sách độc giả để chọn
   loading: Boolean,
-  userInfo: Object,
+  userInfo: Object,     // thông tin user đang đăng nhập
 });
+
+
 
 const emit = defineEmits(["update", "search"]);
 
 const isAdmin = computed(() => props.role === "admin");
-const isUser = computed(() => props.role === "user");
+const isUser  = computed(() => props.role === "user");
 
+// Lưu _id độc giả đang chọn
 const model = ref("");
 
-// SỬA: Hàm xử lý update model
+// Khi admin chọn hoặc thay đổi độc giả
 function onModelUpdate(value) {
   model.value = value;
   emit("update", value);
 }
 
-// Khi admin sửa → set giá trị
+// Khi là user → tự động điền độc giả là chính mình
 watch(
-  () => props.initial,
+  () => props.userInfo,
   (v) => {
-    if (props.isEdit && v) {
-      model.value = v.maDocGia?._id || v.maDocGia;
-      emit("update", model.value); // Đảm bảo emit giá trị ban đầu
+    if (props.role === "user" && v) {
+      emit("update", v._id || v.maDocGia);
     }
   },
   { immediate: true }
 );
 
-// format option
+// Khi vào trang sửa → tự điền độc giả ban đầu
+watch(
+  () => props.initial,
+  (v) => {
+    if (props.isEdit && v) {
+      model.value = v.maDocGia?._id || v.maDocGia;
+      emit("update", model.value);
+    }
+  },
+  { immediate: true }
+);
+
+// Cách hiển thị mỗi độc giả trong danh sách
 function formatDocGia(d) {
   if (!d) return "";
   const name = d.hoLot ? `${d.hoLot} ${d.ten}` : d.ten;
   return `${d.maDocGia || d._id} — ${name}`;
 }
 
-// Hiển thị khi sửa
+// Hiển thị readonly khi admin sửa
 const displayInitial = computed(() => {
   const d = props.initial?.maDocGia;
   if (!d) return "";
@@ -80,12 +94,11 @@ const displayInitial = computed(() => {
   return `${d.maDocGia || d._id} — ${name}`;
 });
 
-// Hiển thị thông tin user
+// Hiển thị thông tin user (luôn dùng khi role = user)
 const userDisplay = computed(() => {
   if (!props.userInfo) return "";
-  return `${props.userInfo.maDocGia} — ${props.userInfo.hoTen}`;
+  return `${props.userInfo.maDocGia} — ${props.userInfo.hoLot} ${props.userInfo.ten}`;
 });
 
-// XÓA: watch model cũ
-// watch(model, (val) => emit("update", val));
+
 </script>

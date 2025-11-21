@@ -1,16 +1,17 @@
 <!-- src/views/UserHome.vue -->
 <template>
   <div class="user-home">
-     <!-- 2 nút điều hướng -->
+    <!-- 2 nút điều hướng -->
     <div class="d-flex justify-content-end mb-3 gap-2">
-      <router-link to="/docgia/muon-sach" class="btn btn-primary btn-sm ">
+      <router-link to="/docgia/muon-sach" class="btn btn-primary btn-sm">
         📚 Lịch sử mượn sách
       </router-link>
-      <router-link to="/docgia/chi-tiet-doc-gia/:id" class="btn btn-secondary btn-sm">
+      <router-link :to="`/docgia/chi-tiet-doc-gia/${user?._id || ''}`" class="btn btn-secondary btn-sm">
         👤 Thông tin cá nhân
       </router-link>
     </div>
-    <!-- 🌟 Carousel sách nổi tiếng -->
+
+    <!-- 🌟 Carousel sách nổi bật -->
     <div id="bookCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
       <div class="carousel-inner rounded-3 shadow-sm">
         <div
@@ -44,27 +45,31 @@
       </div>
     </div>
 
-    <!-- Modal mượn sách -->
-   <TheoDoiMuonSach
-  v-if="borrowModalOpen"
-  :initial="formInitial"
-  :docGias="[userStore.user]"   
-  :saches="saches"
-  @close="borrowModalOpen = false"
-  @saved="onBorrowSuccess"
-/>
-
+    <!-- Mượn sách modal -->
+    <TheoDoiMuonSachForm
+      v-if="borrowModalOpen"
+      :visible="borrowModalOpen"
+      :selected-book="selectedBook"
+      :saches="saches"
+      :user-info="userStore.user"
+      role="user"
+      @saved="onBorrowSuccess"
+      @cancel="onBorrowCancel"
+      @update:visible="borrowModalOpen = $event"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import BookCard from '@/components/Sach/BookCard.vue'
-import TheoDoiMuonSach from '@/components/MuonSach/TheoDoiMuonSachForm.vue'
+import TheoDoiMuonSachForm from '@/components/MuonSach/TheoDoiMuonSachForm.vue'
 import api from '@/services/api'
 import { useUserStore } from '@/stores/users'
 
 const userStore = useUserStore()
+const user = userStore.user || null
+
 const banners = ref([
   { image: '/images/banner1.jpg', title: 'Harry Potter', author: 'J.K. Rowling' },
   { image: '/images/banner2.jpg', title: 'Doraemon', author: 'Fujiko F. Fujio' },
@@ -76,34 +81,49 @@ const loading = ref(false)
 const borrowModalOpen = ref(false)
 const selectedBook = ref(null)
 const page = ref(1)
-const saches = ref([]) 
-const formInitial = ref({})
+const saches = ref([])
 
 onMounted(async () => {
+  await loadFeaturedBooks()
+})
+
+async function loadFeaturedBooks() {
   loading.value = true
   try {
     const res = await api.get(`/sach?page=${page.value}`)
     featured.value = res.data?.data || []
+    // Lưu toàn bộ sách để sử dụng trong form
+    saches.value = featured.value
   } catch (err) {
-    console.error(err)
+    console.error('Lỗi tải sách:', err)
   } finally {
     loading.value = false
   }
-})
+}
 
 function openBorrow(book) {
+  console.log('Mở form mượn sách:', book)
+  
   selectedBook.value = book
-  saches.value = [book] // chỉ có 1 quyển đang chọn
-  formInitial.value = {
-    maDocGia: userStore.user?._id, // id độc giả đang đăng nhập
-    maSach: book._id || book.maSach,
-  }
   borrowModalOpen.value = true
 }
 
+function onBorrowSuccess(savedData) {
+  console.log('Mượn sách thành công:', savedData)
+  borrowModalOpen.value = false
+  selectedBook.value = null
+  
+  // Hiển thị thông báo thành công
+  alert('Đã gửi yêu cầu mượn sách thành công!')
+  
+  // Không cần reload trang, chỉ reset state
+  // window.location.reload()
+}
 
-function onBorrowSuccess() {
-  window.location.reload()
+function onBorrowCancel() {
+  console.log('Hủy mượn sách')
+  borrowModalOpen.value = false
+  selectedBook.value = null
 }
 </script>
 
@@ -111,6 +131,7 @@ function onBorrowSuccess() {
 .user-home {
   background-color: #f8fafb;
   min-height: 100vh;
+  padding: 20px;
 }
 .carousel-item img {
   height: 360px;

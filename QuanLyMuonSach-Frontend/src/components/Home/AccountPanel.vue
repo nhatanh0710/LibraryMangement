@@ -22,6 +22,7 @@
 import { ref, onMounted } from 'vue'
 const user = ref(null)
 
+// Giả sử thông tin user được lưu trong localStorage sau khi đăng nhập
 onMounted(() => {
   try {
     const raw = localStorage.getItem('user')

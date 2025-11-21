@@ -27,7 +27,7 @@ import QuanLyNXB from "@/pages/NhanVien/QuanLyNXB.vue";
 
 const routes = [
   // === Trang Login mặc định khi khởi động ===
-  { path: "/", redirect: "/login" },
+  { path: "/", redirect: "/docgia/trang-chu" },
 
   // === Độc giả ===
   {
@@ -46,6 +46,10 @@ const routes = [
         path: "chi-tiet-sach/:id",
         name: "ChiTietSach",
         component: ChiTietSach,
+        props: (route) => ({
+          id: route.params.id,
+          maSach: route.query.maSach, // hỗ trợ cả query param
+        }),
       },
       { path: "register", name: "RegisterDocGia", component: RegisterDocGia },
     ],

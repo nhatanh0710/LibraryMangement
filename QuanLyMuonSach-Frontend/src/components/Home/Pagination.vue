@@ -47,14 +47,17 @@ const props = defineProps({
   maxButtons: { type: Number, default: 5 }
 })
 
+// gọi sự kiện khi trang hoặc giới hạn thay đổi
 const emit = defineEmits(['update:page', 'update:limit', 'change'])
 
+// ✅ Các tham số phản ứng
 const { page: pageProp, totalPages: totalPagesProp, limit: limitProp } = toRefs(props)
 
 const currentPage = computed(() => Math.max(1, Math.min(pageProp.value, totalPagesProp.value)))
 const totalPages = computed(() => Math.max(1, totalPagesProp.value))
 const pageSize = ref(limitProp.value)
 
+// Đồng bộ pageSize khi prop limit thay đổi
 watch(limitProp, val => (pageSize.value = val))
 
 // ✅ Tính danh sách trang hiển thị (căn giữa)

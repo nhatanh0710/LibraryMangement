@@ -2,12 +2,12 @@
   <div class="mb-3">
     <label class="form-label">Trạng thái</label>
 
-    <!-- USER: chỉ hiển thị text -->
+    <!-- User: luôn hiển thị trạng thái cố định (không được chỉnh) -->
     <div v-if="isUser" class="form-control bg-light">
       CHỜ DUYỆT
     </div>
 
-    <!-- ADMIN: hiển thị dropdown -->
+    <!-- Admin: được thay đổi trạng thái -->
     <select
       v-else
       class="form-select"
@@ -24,15 +24,16 @@
 import { ref, computed, watch } from "vue";
 
 const props = defineProps({
-  role: String,
-  modelValue: String,
+  role: String,           // admin hoặc user
+  modelValue: String,     // giá trị trạng thái từ cha
 });
 
 const emit = defineEmits(["update:modelValue"]);
 
 const isAdmin = computed(() => props.role === "admin");
-const isUser = computed(() => props.role === "user");
+const isUser  = computed(() => props.role === "user");
 
+// Danh sách trạng thái cho admin
 const statuses = [
   "CHỜ DUYỆT",
   "ĐÃ DUYỆT",
@@ -40,13 +41,16 @@ const statuses = [
   "HẾT HẠN",
 ];
 
+// Local state để bind vào select
 const localValue = ref(props.modelValue || "CHỜ DUYỆT");
 
+// Khi cha truyền giá trị mới → cập nhật local
 watch(
   () => props.modelValue,
   (v) => (localValue.value = v),
   { immediate: true }
 );
 
+// Emit lên cha khi admin thay đổi dropdown
 watch(localValue, (v) => emit("update:modelValue", v));
 </script>
