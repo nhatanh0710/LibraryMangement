@@ -1,95 +1,84 @@
 @import './variables.css';
 
-/* ===== RESET & FONT ===== */
-html,
-body,
-#app {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    font-family: var(--font-main);
-    background-color: var(--background-light);
-    color: var(--text-dark);
+/* ===== OVERRIDE BOOTSTRAP COLORS ===== */
+:root {
+    --bs-primary: var(--primary-700);
+    --bs-primary-rgb: 17, 100, 102;
+    --bs-secondary: var(--muted-300);
+    --bs-success: var(--success-500);
+    --bs-info: var(--info-500);
+    --bs-warning: var(--warning-500);
+    --bs-danger: var(--error-500);
+    --bs-light: var(--muted-100);
+    --bs-dark: var(--primary-900);
 }
 
-/* ===== LINK ===== */
-a {
-    color: var(--primary-700);
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-a:hover {
-    color: var(--primary-900);
-    text-decoration: underline;
-}
-
-/* ===== FORM ===== */
-input,
-select,
-textarea {
-    border-radius: var(--radius);
-}
-
-.form-control:focus {
-    border-color: var(--primary-700);
-    box-shadow: 0 0 0 0.2rem rgba(17, 100, 102, 0.15);
-}
-
-/* ===== BUTTONS ===== */
+/* Primary color overrides */
 .btn-primary {
-    background-color: var(--primary-700);
-    border-color: var(--primary-700);
+    --bs-btn-bg: var(--primary-700);
+    --bs-btn-border-color: var(--primary-700);
+    --bs-btn-hover-bg: var(--primary-800);
+    --bs-btn-hover-border-color: var(--primary-800);
+    --bs-btn-active-bg: var(--primary-900);
+    --bs-btn-active-border-color: var(--primary-900);
 }
 
-.btn-primary:hover {
-    background-color: var(--primary-900);
-    border-color: var(--primary-900);
-}
-
-.btn-success {
-    background-color: var(--primary-700);
-    border-color: var(--primary-700);
-    color: #fff;
-}
-
-.btn-success:hover {
-    background-color: var(--muted-200);
-    border-color: var(---muted-200);
-    color: black;
-}
-
-/* ===== CARD ===== */
-.card {
-    border: none;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    background-color: #fff;
-}
-
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar {
-    width: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: var(--accent-300);
-    border-radius: 10px;
-}
-
-/* ===== GLOBAL UTILITIES ===== */
-.text-muted {
-    color: var(--text-muted) !important;
+.btn-outline-primary {
+    --bs-btn-color: var(--primary-700);
+    --bs-btn-border-color: var(--primary-700);
+    --bs-btn-hover-bg: var(--primary-700);
+    --bs-btn-hover-border-color: var(--primary-700);
 }
 
 .text-primary {
+    --bs-text-opacity: 1;
     color: var(--primary-700) !important;
 }
 
 .bg-primary {
+    --bs-bg-opacity: 1;
     background-color: var(--primary-700) !important;
 }
 
+/* Alert overrides */
+.alert-primary {
+    --bs-alert-color: var(--primary-700);
+    --bs-alert-bg: rgba(17, 100, 102, 0.1);
+    --bs-alert-border-color: rgba(17, 100, 102, 0.3);
+}
+
+/* Badge overrides */
+.badge.bg-primary {
+    background-color: var(--primary-700) !important;
+}
+
+/* Form overrides */
+.form-control:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 0.2rem rgba(17, 100, 102, 0.15);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-700);
+    border-color: var(--primary-700);
+}
+
+/* ===== BASE STYLES ===== */
+body {
+    background-color: var(--background-light);
+    color: var(--text-dark);
+    font-family: var(--font-main);
+}
+
+/* ===== CUSTOM UTILITIES ===== */
 .bg-accent {
     background-color: var(--accent-100) !important;
+}
+
+.bg-muted {
+    background-color: var(--muted-200) !important;
+}
+
+.text-accent {
+    color: var(--accent-300) !important;
 }

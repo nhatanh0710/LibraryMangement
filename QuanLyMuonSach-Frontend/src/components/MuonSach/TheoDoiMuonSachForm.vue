@@ -1,12 +1,16 @@
 <template>
-  <div v-if="visible" class="form-overlay">
-    <div class="form-container">
-      <form @submit.prevent="submitForm">
-        
-        <!-- Tiêu đề: tạo mới hoặc chỉnh sửa -->
-        <h5 class="mb-3">{{ isEdit ? 'Sửa phiếu mượn' : 'Thêm phiếu mượn' }}</h5>
+  <div v-if="visible" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-journal-plus me-2"></i>
+          {{ isEdit ? 'Sửa phiếu mượn' : 'Thêm phiếu mượn' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" @click="cancel"></button>
+      </div>
 
-        <!-- Chọn / hiển thị độc giả -->
+      <form @submit.prevent="submitForm" class="modal-body">
+        <!-- Các component con giữ nguyên -->
         <BorrowerSection
           :role="role"
           :is-edit="isEdit"
@@ -17,7 +21,6 @@
           @update="(v) => (form.maDocGia = v)"
         />
 
-        <!-- Chọn / hiển thị sách -->
         <BookSection
           :role="role"
           :is-edit="isEdit"
@@ -28,7 +31,6 @@
           @update="(v) => (form.maSach = v)"
         />
 
-        <!-- Nhập ngày mượn / trả -->
         <BorrowDatesSection
           :role="role"
           :is-edit="isEdit"
@@ -36,29 +38,33 @@
           @update="updateDates"
         />
 
-        <!-- Trạng thái phiếu (user readonly) -->
         <BorrowStatusSection
           :role="role"
           v-model="form.trangThai"
         />
 
         <!-- Hiển thị lỗi -->
-        <div v-if="error" class="alert alert-danger py-1">{{ error }}</div>
-
-        <!-- Nút lưu / hủy -->
-        <div class="d-flex justify-content-end mt-3">
-          <button type="button" class="btn btn-secondary me-2" @click="cancel">Hủy</button>
-          <button type="submit" class="btn btn-primary" :disabled="submitting">
-            {{ submitting ? 'Đang xử lý...' : 'Lưu' }}
-          </button>
+        <div v-if="error" class="alert alert-danger mt-3">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ error }}
         </div>
-
       </form>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" @click="cancel">
+          <i class="bi bi-x-circle me-2"></i>Hủy
+        </button>
+        <button type="submit" class="btn btn-primary" :disabled="submitting" @click="submitForm">
+          <i class="bi" :class="submitting ? 'bi-arrow-repeat spin' : 'bi-check-circle'"></i>
+          {{ submitting ? 'Đang xử lý...' : 'Lưu' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
+// Phần script giữ nguyên hoàn toàn
 import { reactive, computed, ref, watch } from "vue";
 import BorrowerSection from "./BorrowerSection.vue";
 import BookSection from "./BookSection.vue";
@@ -68,15 +74,15 @@ import * as TheoDoiService from "@/services/muonSachService";
 
 // Nhận dữ liệu từ cha
 const props = defineProps({
-  role: { type: String, required: true },     // admin / user
-  initial: { type: Object, default: null },   // dữ liệu khi sửa
+  role: { type: String, required: true },
+  initial: { type: Object, default: null },
   docGias: { type: Array, default: () => [] },
   saches: { type: Array, default: () => [] },
   docGiasLoading: Boolean,
   sachesLoading: Boolean,
   userInfo: Object,
   visible: { type: Boolean, default: false },
-  selectedBook: { type: Object, default: null } // Thêm prop nhận sách đã chọn từ BookCard
+  selectedBook: { type: Object, default: null }
 });
 
 // Emit về cha
@@ -100,17 +106,12 @@ const form = reactive({
 // Theo dõi visible để reset form khi mở
 watch(() => props.visible, v => {
   if (v && !isEdit.value) {
-    // Khi mở form tạo mới, tự động set sách nếu có selectedBook
     if (props.selectedBook && props.selectedBook._id) {
       form.maSach = props.selectedBook._id;
     }
-    
-    // Tự động set độc giả nếu là user
     if (props.role === "user" && props.userInfo && props.userInfo._id) {
       form.maDocGia = props.userInfo._id;
     }
-    
-    // Tự động set ngày mượn là hôm nay
     form.ngayMuon = new Date().toISOString().split('T')[0];
   }
 });
@@ -166,7 +167,6 @@ function validate() {
   if (!form.maSach) return "Chưa chọn sách";
   if (!form.ngayDuKienTra) return "Chưa chọn ngày dự kiến trả";
   
-  // Validate ngày dự kiến trả phải sau ngày mượn
   if (form.ngayMuon && form.ngayDuKienTra) {
     const ngayMuon = new Date(form.ngayMuon);
     const ngayDuKienTra = new Date(form.ngayDuKienTra);
@@ -197,13 +197,10 @@ async function submitForm() {
 
     let savedData;
 
-    // Nếu đang sửa → gọi update
     if (isEdit.value) {
       const res = await TheoDoiService.updateMuonSach(props.initial._id, payload);
       savedData = res.data;
-    } 
-    // Nếu tạo mới → gọi create
-    else {
+    } else {
       const res = await TheoDoiService.createMuonSach(payload);
       savedData = res.data;
     }
@@ -232,7 +229,7 @@ function close() {
 </script>
 
 <style scoped>
-.form-overlay {
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -245,14 +242,51 @@ function close() {
   z-index: 9999;
 }
 
-.form-container {
+.modal-content {
   background: white;
-  padding: 24px;
-  border-radius: 8px;
+  border-radius: 12px;
   width: 600px;
-  max-width: 90vw;
+  max-width: 95vw;
   max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  border-bottom: 3px solid var(--accent-300);
+  padding: 1.25rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  max-height: 60vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+  padding: 1.25rem;
+}
+
+/* Spin animation cho loading */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-content {
+    margin: 1rem;
+    width: auto;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
 }
 </style>

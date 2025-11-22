@@ -72,9 +72,6 @@
         </div>
       </div>
       
-      <div class="suggestions-footer">
-        <small class="text-muted">Nhấn Enter để tìm kiếm tất cả</small>
-      </div>
     </div>
   </div>
 </template>
@@ -142,7 +139,7 @@ function highlightMatch(text) {
 
 // Chọn sách từ gợi ý
 function selectBook(book) {
-  router.push(`/sach/${book._id}`)
+  router.push(`/docgia/chi-tiet-sach/${book._id}`)
   clearSearch()
 }
 

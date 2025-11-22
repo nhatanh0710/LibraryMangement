@@ -1,28 +1,18 @@
-<!-- src/views/UserHome.vue -->
 <template>
   <div class="user-home">
-    <!-- 2 nút điều hướng -->
-    <div class="d-flex justify-content-end mb-3 gap-2">
-      <router-link to="/docgia/muon-sach" class="btn btn-primary btn-sm">
-        📚 Lịch sử mượn sách
-      </router-link>
-      <router-link :to="`/docgia/chi-tiet-doc-gia/${user?._id || ''}`" class="btn btn-secondary btn-sm">
-        👤 Thông tin cá nhân
-      </router-link>
-    </div>
 
-    <!-- 🌟 Carousel sách nổi bật -->
+    <!-- Carousel -->
     <div id="bookCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
-      <div class="carousel-inner rounded-3 shadow-sm">
+      <div class="carousel-inner" style="border-radius: var(--radius-xl);">
         <div
           v-for="(banner, i) in banners"
           :key="i"
           :class="['carousel-item', { active: i === 0 }]"
         >
-          <img :src="banner.image" class="d-block w-100" :alt="banner.title" />
-          <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded-2 p-2">
+          <img :src="banner.image" class="d-block w-100 carousel-img" :alt="banner.title" />
+          <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded-3 p-3">
             <h5>{{ banner.title }}</h5>
-            <p>{{ banner.author }}</p>
+            <p class="mb-0">{{ banner.author }}</p>
           </div>
         </div>
       </div>
@@ -34,10 +24,19 @@
       </button>
     </div>
 
-    <!-- 📚 Danh sách sách nổi bật -->
+    <!-- Danh sách sách -->
     <div class="container">
-      <h3 class="mb-3 fw-bold text-primary">Sách nổi bật</h3>
-      <div v-if="loading" class="text-center py-5">Đang tải sách...</div>
+      <h3 class="mb-4 fw-bold text-primary">
+        <i class="bi bi-stars me-2"></i>Sách nổi bật
+      </h3>
+      
+      <div v-if="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2 text-muted">Đang tải sách...</p>
+      </div>
+      
       <div v-else class="row g-4">
         <div class="col-sm-6 col-md-4 col-lg-3" v-for="book in featured" :key="book.maSach">
           <BookCard :book="book" @borrow="openBorrow" />
@@ -45,7 +44,7 @@
       </div>
     </div>
 
-    <!-- Mượn sách modal -->
+    <!-- Modal mượn sách -->
     <TheoDoiMuonSachForm
       v-if="borrowModalOpen"
       :visible="borrowModalOpen"
@@ -61,6 +60,7 @@
 </template>
 
 <script setup>
+// Script giữ nguyên
 import { ref, onMounted } from 'vue'
 import BookCard from '@/components/Sach/BookCard.vue'
 import TheoDoiMuonSachForm from '@/components/MuonSach/TheoDoiMuonSachForm.vue'
@@ -92,7 +92,6 @@ async function loadFeaturedBooks() {
   try {
     const res = await api.get(`/sach?page=${page.value}`)
     featured.value = res.data?.data || []
-    // Lưu toàn bộ sách để sử dụng trong form
     saches.value = featured.value
   } catch (err) {
     console.error('Lỗi tải sách:', err)
@@ -102,26 +101,17 @@ async function loadFeaturedBooks() {
 }
 
 function openBorrow(book) {
-  console.log('Mở form mượn sách:', book)
-  
   selectedBook.value = book
   borrowModalOpen.value = true
 }
 
 function onBorrowSuccess(savedData) {
-  console.log('Mượn sách thành công:', savedData)
   borrowModalOpen.value = false
   selectedBook.value = null
-  
-  // Hiển thị thông báo thành công
   alert('Đã gửi yêu cầu mượn sách thành công!')
-  
-  // Không cần reload trang, chỉ reset state
-  // window.location.reload()
 }
 
 function onBorrowCancel() {
-  console.log('Hủy mượn sách')
   borrowModalOpen.value = false
   selectedBook.value = null
 }
@@ -129,12 +119,23 @@ function onBorrowCancel() {
 
 <style scoped>
 .user-home {
-  background-color: #f8fafb;
+  background-color: var(--background-light);
   min-height: 100vh;
-  padding: 20px;
+  padding: var(--space-lg);
 }
-.carousel-item img {
+
+.carousel-img {
   height: 360px;
   object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .user-home {
+    padding: var(--space);
+  }
+  
+  .carousel-img {
+    height: 250px;
+  }
 }
 </style>

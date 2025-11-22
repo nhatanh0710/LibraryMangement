@@ -1,59 +1,71 @@
 @import './variables.css';
 
-/* ===== HEADER ===== */
-.app-header {
-    background: linear-gradient(90deg, var(--primary-700), var(--primary-900));
-    color: #fff;
-    padding: 0.5rem 1.25rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: var(--shadow);
-}
-
-/* ===== SIDEBAR ===== */
-.app-sidebar {
-    width: 220px;
-    background-color: #fff;
-    border-right: 1px solid rgba(0, 0, 0, 0.05);
+/* ===== LAYOUT ===== */
+.app-layout {
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
+.app-main {
+    flex: 1;
+    display: flex;
+}
+
+/* ===== HEADER ===== */
+.app-header {
+    background: linear-gradient(135deg, var(--primary-700), var(--primary-900));
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 3px solid var(--accent-300);
+}
+
+/* ===== SIDEBAR ===== */
+.app-sidebar {
+    width: 250px;
+    background: white;
+    border-right: 1px solid var(--muted-200);
+}
+
 .app-sidebar .nav-link {
-    color: #333;
-    padding: 0.65rem 0.9rem;
-    border-radius: 6px;
-    transition: background-color 0.2s;
+    color: var(--text-dark);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    transition: all 0.2s;
 }
 
-.app-sidebar .nav-link:hover {
-    background-color: var(--muted-200);
-}
-
+.app-sidebar .nav-link:hover,
 .app-sidebar .router-link-exact-active {
-    background-color: var(--accent-100);
+    background: var(--accent-100);
     color: var(--primary-900);
-    font-weight: 600;
 }
 
-/* ===== CONTENT AREA ===== */
+/* ===== CONTENT ===== */
 .content-area {
     flex: 1;
-    background-color: #fff;
     padding: 1.5rem;
-    border-radius: var(--radius);
-    margin: 1rem;
-    box-shadow: var(--shadow);
+    background: #f8fafb;
 }
 
 /* ===== FOOTER ===== */
-footer {
-    background: #fff;
-    border-top: 1px solid #eee;
+.app-footer {
+    background: var(--primary-900);
+    color: white;
+    padding: 1rem;
     text-align: center;
-    color: var(--text-muted);
-    padding: 0.75rem;
-    font-size: 0.9rem;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .app-main {
+        flex-direction: column;
+    }
+
+    .app-sidebar {
+        width: 100%;
+    }
+
+    .content-area {
+        padding: 1rem;
+    }
 }

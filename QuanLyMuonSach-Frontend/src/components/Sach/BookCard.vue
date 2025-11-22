@@ -1,23 +1,18 @@
 <template>
-  <!-- Component hiển thị thẻ sách -->
-  <div class="book-card card h-100 shadow-sm border-0" @click="openDetail" role="button">
-    <!-- cover book hoặc placeholder -->
-    <img :src="book.hinhAnh || placeholder" class="card-img-top" alt="cover" />
+  <div class="book-card" @click="openDetail" role="button">
+    <div class="book-cover">
+      <img :src="book.hinhAnh || placeholder" :alt="book.tenSach" />
+      <div v-if="book.soQuyenConLai === 0" class="out-of-stock">Hết sách</div>
+    </div>
 
-    <div class="card-body d-flex flex-column">
-      <!-- tên sách -->
-      <h6 class="card-title fw-semibold mb-1 text-dark">{{ book.tenSach }}</h6>
-      <!-- tác giả -->
-      <p class="text-muted small mb-2">{{ book.nguonGoc_tacGia || 'Tác giả không rõ' }}</p>
-      <!-- giá -->
-      <p class="fw-bold text-primary mb-3">{{ formatPrice(book.donGia) }}</p>
-
-      <!-- nút mượn -->
-      <div class="mt-auto text-center">
-        <button class="btn btn-primary btn-sm px-3" @click.stop="onBorrowClick">
-          Mượn ngay
-        </button>
-      </div>
+    <div class="book-info">
+      <h6 class="book-title">{{ book.tenSach }}</h6>
+      <p class="book-author">{{ book.nguonGoc_tacGia || 'Tác giả không rõ' }}</p>
+      <p class="book-price">{{ formatPrice(book.donGia) }}</p>
+      
+      <button class="borrow-btn" @click.stop="onBorrowClick" :disabled="book.soQuyenConLai === 0">
+        {{ book.soQuyenConLai === 0 ? 'Hết sách' : 'Mượn ngay' }}
+      </button>
     </div>
   </div>
 </template>
@@ -29,45 +24,118 @@ const emits = defineEmits(['borrow'])
 const router = useRouter()
 const placeholder = '/images/book-placeholder.png'
 
-// click vào thẻ chuyển đến trang chi tiết sách
 function openDetail() {
-  // Sử dụng _id thay vì maSach vì router đang dùng id
   router.push({ name: 'ChiTietSach', params: { id: props.book._id } })
 }
-// click nút Mượn ngay emit sự kiện lên parent
+
 function onBorrowClick(event) {
-  event.stopPropagation() // Ngăn sự kiện nổi lên parent
+  event.stopPropagation()
   emits('borrow', props.book)
 }
-// format giá tiền theo vi-VN
+
 function formatPrice(v) {
-  return v ? new Intl.NumberFormat('vi-VN').format(v) + ' ₫' : '—'
+  return v ? new Intl.NumberFormat('vi-VN').format(v) + ' ₫' : 'Miễn phí'
 }
 </script>
 
 <style scoped>
 .book-card {
-  border-radius: 0.75rem;
+  background: white;
+  border-radius: 12px;
   overflow: hidden;
-  transition: all 0.25s ease;
-  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
   cursor: pointer;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
+
 .book-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
-.card-img-top {
+
+.book-cover {
+  position: relative;
   height: 200px;
+  overflow: hidden;
+}
+
+.book-cover img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border-bottom: 3px solid #116466;
+  transition: transform 0.3s ease;
 }
-.btn-primary {
-  background-color: #116466;
-  border-color: #116466;
+
+.book-card:hover .book-cover img {
+  transform: scale(1.05);
 }
-.btn-primary:hover {
-  background-color: #0d4d4f;
-  border-color: #0d4d4f;
+
+.out-of-stock {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ef4444;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.book-info {
+  padding: 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-title {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.book-author {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.book-price {
+  color: #116466;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.borrow-btn {
+  background: #116466;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-top: auto;
+}
+
+.borrow-btn:hover:not(:disabled) {
+  background: #0d4d4f;
+  transform: translateY(-1px);
+}
+
+.borrow-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
 }
 </style>

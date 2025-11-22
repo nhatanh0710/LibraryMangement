@@ -1,24 +1,93 @@
 :root {
-    /* ==== Màu chủ đạo (Natural Library Theme) ==== */
+    /* ==== Màu chủ đạo - Natural Library Theme ==== */
     --primary-900: #1e2d2f;
-    /* Đen than */
+    /* Đen than - cho text, header */
+    --primary-800: #2c4a4c;
+    /* Xanh đậm trung gian */
     --primary-700: #116466;
-    /* Xanh teal thư viện */
+    /* Xanh teal thư viện - primary */
+    --primary-600: #2a8c8f;
+    /* Xanh teal sáng hơn */
+    --primary-500: #4da6a8;
+    /* Xanh teal nhạt */
+
+    --accent-400: #c19a6b;
+    /* Nâu gỗ đậm */
     --accent-300: #d9b08c;
-    /* Nâu nhạt, màu gỗ */
+    /* Nâu gỗ nhạt - secondary */
+    --accent-200: #e8d0b3;
+    /* Nâu gỗ rất nhạt */
     --accent-100: #ffcb9a;
-    /* Vàng be dịu */
+    /* Vàng be - highlights */
+
+    --muted-300: #b8d5d2;
+    /* Xanh lá nhạt đậm */
+    --muted-200: #d1e8e2;
+    /* Xanh lá nhạt - subtle backgrounds */
+    --muted-100: #e8f4f1;
+    /* Xanh lá rất nhạt */
+
     --background-light: #f9fafb;
     /* Nền sáng tự nhiên */
-    --muted-200: #d1e8e2;
-    /* Xanh nhạt, trung gian */
+    --surface-white: #ffffff;
+    /* Màu trắng bề mặt */
 
-    /* ==== Font & Layout ==== */
-    --font-main: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    --radius: 10px;
-    --shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    /* ==== Semantic Colors ==== */
+    --success-500: #10b981;
+    /* Xanh lá thành công */
+    --warning-500: #f59e0b;
+    /* Vàng cảnh báo */
+    --error-500: #ef4444;
+    /* Đỏ lỗi */
+    --info-500: #3b82f6;
+    /* Xanh dương thông tin */
 
     /* ==== Màu văn bản ==== */
-    --text-dark: #222;
-    --text-muted: #666;
+    --text-dark: #1f2937;
+    /* Text chính */
+    --text-medium: #4b5563;
+    /* Text phụ */
+    --text-muted: #6b7280;
+    /* Text muted */
+    --text-light: #9ca3af;
+    /* Text rất nhạt */
+
+    /* ==== Font & Typography ==== */
+    --font-main: 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-heading: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* ==== Border Radius ==== */
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+
+    /* ==== Shadows ==== */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.2);
+
+    /* ==== Transitions ==== */
+    --transition-fast: 0.15s ease;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s ease;
+
+    /* ==== Spacing ==== */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+
+    /* ==== Z-index ==== */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal: 1040;
+    --z-popover: 1050;
+    --z-tooltip: 1060;
 }

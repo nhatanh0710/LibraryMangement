@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-between mb-3 align-items-center">
       <h3 class="mb-0">Danh sách sách</h3>
       <div>
-        <button class="btn btn-success me-2" @click="openAdd" :disabled="loading">Thêm sách</button>
+        <button class="btn btn-primary me-2" @click="openAdd" :disabled="loading">Thêm sách mới</button>
         <!-- không cần nút tải lại theo yêu cầu trước, nhưng vẫn để reload fn nếu cần -->
       </div>
     </div>
