@@ -11,6 +11,7 @@ import MuonSach from "@/pages/DocGia/MuonSach.vue";
 import ChiTietDocGia from "../pages/DocGia/ChiTietDocGia.vue";
 import ChiTietSach from "../pages/DocGia/ChiTietSach.vue";
 import RegisterDocGia from "@/pages/auth/RegisterDocGia.vue";
+import About from "@/pages/DocGia/About.vue";
 
 // ===== Auth pages =====
 import Login from "@/pages/auth/Login.vue";
@@ -23,6 +24,7 @@ import QuanLyDocGia from "@/pages/NhanVien/QuanLyDocGia.vue";
 import QuanLyNhanVien from "@/pages/NhanVien/QuanLyNhanVien.vue";
 import QuanLyMuonSach from "@/pages/NhanVien/QuanLyMuonSach.vue";
 import QuanLyNXB from "@/pages/NhanVien/QuanLyNXB.vue";
+import ChiTietNhanVien from "@/pages/NhanVien/ChiTietNhanVien.vue";
 // import ThongKe from "@/pages/NhanVien/ThongKe.vue";
 
 const routes = [
@@ -51,6 +53,10 @@ const routes = [
           maSach: route.query.maSach, // hỗ trợ cả query param
         }),
       },
+      {path: "about",
+        name: "About",
+        component: About,
+      },
       { path: "register", name: "RegisterDocGia", component: RegisterDocGia },
     ],
   },
@@ -75,6 +81,12 @@ const routes = [
         component: QuanLyMuonSach,
       },
       { path: "quan-ly-nxb", name: "QuanLyNXB", component: QuanLyNXB },
+      {
+        path: "chi-tiet-nhan-vien/:id",
+        name: "ChiTietNhanVien",
+        component: ChiTietNhanVien,
+        props: true,
+      },
       // { path: "thong-ke", name: "ThongKe", component: ThongKe },
     ],
   },

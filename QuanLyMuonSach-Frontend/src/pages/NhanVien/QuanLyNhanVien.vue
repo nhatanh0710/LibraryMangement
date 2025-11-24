@@ -39,8 +39,8 @@
             </td>
             <td>{{ formatDate(nv.createdAt) }}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary me-2" @click="openEdit(nv)">Sửa</button>
-              <button class="btn btn-sm btn-outline-danger" @click="handleDelete(nv)">Xóa</button>
+              <button class="btn btn-sm btn-accent me-2" @click="openEdit(nv)">Sửa</button>
+              <button class="btn btn-sm btn-danger" @click="handleDelete(nv)">Xóa</button>
             </td>
           </tr>
         </tbody>

@@ -40,8 +40,8 @@
               </span>
             </td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary me-2" @click="openEdit(r)">Sửa</button>
-              <button class="btn btn-sm btn-outline-danger" @click="handleDelete(r)">Xóa</button>
+              <button class="btn btn-sm btn-accent me-2" @click="openEdit(r)">Sửa</button>
+              <button class="btn btn-sm btn-danger" @click="handleDelete(r)">Xóa</button>
             </td>
           </tr>
         </tbody>

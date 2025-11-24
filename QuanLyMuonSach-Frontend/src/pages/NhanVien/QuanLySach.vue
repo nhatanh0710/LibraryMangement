@@ -3,8 +3,7 @@
     <div class="d-flex justify-content-between mb-3 align-items-center">
       <h3 class="mb-0">Danh sách sách</h3>
       <div>
-        <button class="btn btn-primary me-2" @click="openAdd" :disabled="loading">Thêm sách mới</button>
-        <!-- không cần nút tải lại theo yêu cầu trước, nhưng vẫn để reload fn nếu cần -->
+        <button class="btn btn-primary me-2" @click="openAdd" >Thêm sách mới</button>
       </div>
     </div>
 
@@ -32,7 +31,7 @@
             <td>{{ book.soQuyen ?? '-' }}</td>
             <td>{{ book.nguonGoc_tacGia ?? '-' }}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-primary me-2" @click="openEdit(book)" :disabled="loading">Sửa</button>
+              <button class="btn btn-sm btn-accent me-2" @click="openEdit(book)" :disabled="loading">Sửa</button>
               <button class="btn btn-sm btn-danger" @click="handleDeleteBook(book)" :disabled="loading">Xóa</button>
             </td>
           </tr>

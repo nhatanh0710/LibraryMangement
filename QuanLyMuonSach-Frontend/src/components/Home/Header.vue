@@ -39,27 +39,42 @@
           </template>
 
           <!-- Hiển thị khi đã đăng nhập -->
-          <template v-else>
+           <template v-else>
             <li class="nav-item dropdown">
               <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" 
                  data-bs-toggle="dropdown" aria-expanded="false">
                 <div class="user-info me-2 text-end">
                   <div class="user-name">{{ user.hoLot }} {{ user.ten }}</div>
-                  <div class="user-code small opacity-75">{{ user.maDocGia }}</div>
+                  <div class="user-code small opacity-75">
+                    {{ isAdmin ? user.msnv : user.maDocGia }}
+                  </div>
+                  <div v-if="isAdmin" class="user-role badge bg-warning mt-1">Quản trị</div>
                 </div>
                 <i class="bi bi-person-circle fs-5"></i>
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
+                <!-- Thông tin tài khoản - route khác nhau cho admin/độc giả -->
                 <li>
                   <router-link class="dropdown-item" :to="profileRoute">
-                    <i class="bi bi-person me-2"></i>Thông tin tài khoản
+                    <i class="bi bi-person me-2"></i>
+                    {{ isAdmin ? 'Thông tin nhân viên' : 'Thông tin độc giả' }}
                   </router-link>
                 </li>
-                <li>
+                
+                <!-- Chỉ hiển thị lịch sử mượn sách cho độc giả -->
+                <li v-if="!isAdmin">
                   <router-link class="dropdown-item" to="/docgia/lich-su-muon">
                     <i class="bi bi-clock-history me-2"></i>Lịch sử mượn sách
                   </router-link>
                 </li>
+
+                <!-- Menu cho admin -->
+                <li v-if="isAdmin">
+                  <router-link class="dropdown-item" to="/admin">
+                    <i class="bi bi-speedometer2 me-2"></i>Bảng điều khiển
+                  </router-link>
+                </li>
+
                 <li><hr class="dropdown-divider" /></li>
                 <li>
                   <button class="dropdown-item text-danger" @click="logout">
@@ -99,6 +114,24 @@ function getLocalUser() {
   }
 }
 
+// Kiểm tra có phải admin không
+const isAdmin = computed(() => {
+  return user.value && (user.value.msnv || user.value.chucVu)
+})
+
+// Route đến trang thông tin tài khoản
+const profileRoute = computed(() => {
+  if (!user.value) return '/login'
+  
+  if (isAdmin.value) {
+    // Route cho admin/nhân viên
+    return `/admin/chi-tiet-nhan-vien/${user.value._id || user.value.msnv}`
+  } else {
+    // Route cho độc giả
+    return `/docgia/chi-tiet-doc-gia/${user.value._id || user.value.maDocGia}`
+  }
+})
+
 function onSearch(searchData) {
   console.log('Tìm kiếm:', searchData)
 }
@@ -111,16 +144,8 @@ function logout() {
   userStore.logout()
   localStorage.removeItem('user')
   localStorage.removeItem('token')
-  router.push('/login')
+  router.push('/')
 }
-
-const profileRoute = computed(() => {
-  if (!user.value) return '/login'
-  // Nếu là admin
-  if (user.value.msnv || user.value.chucVu) return '/admin'
-  // Nếu là độc giả
-  return `/docgia/chi-tiet-doc-gia/${user.value._id || user.value.maDocGia}`
-})
 
 // Khởi tạo Bootstrap dropdown
 onMounted(() => {

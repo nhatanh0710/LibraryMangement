@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h3 class="mb-0">Quản lý Nhà Xuất Bản</h3>
       <div>
-        <button class="btn btn-primary me-2" @click="openAdd" :disabled="loading">Thêm Nhà xuất Bản</button>
+        <button class="btn btn-primary me-2" @click="openAdd" >Thêm Nhà xuất Bản</button>
       </div>
     </div>
 
@@ -29,8 +29,8 @@
             <td>{{ nxb.tenNXB }}</td>
             <td>{{ nxb.diaChi || '—' }}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary me-2" @click="openEdit(nxb)">Sửa</button>
-              <button class="btn btn-sm btn-outline-danger" @click="handleDeleteNXB(nxb)">Xóa</button>
+              <button class="btn btn-sm btn-accent me-2" @click="openEdit(nxb)">Sửa</button>
+              <button class="btn btn-sm btn-danger" @click="handleDeleteNXB(nxb)">Xóa</button>
             </td>
           </tr>
         </tbody>

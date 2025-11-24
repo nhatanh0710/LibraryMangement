@@ -30,6 +30,15 @@
     --bs-btn-hover-border-color: var(--primary-700);
 }
 
+.btn-accent {
+    --bs-btn-bg: var(--accent-100);
+    --bs-btn-border-color: var(--accent-300);
+    --bs-btn-hover-bg: var(--accent-300);
+    --bs-btn-hover-border-color: var(--accent-300);
+    --bs-btn-active-bg: var(--accent-400);
+    --bs-btn-active-border-color: var(--accent-400);
+}
+
 .text-primary {
     --bs-text-opacity: 1;
     color: var(--primary-700) !important;

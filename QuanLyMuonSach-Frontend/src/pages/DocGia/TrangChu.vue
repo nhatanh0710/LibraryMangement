@@ -24,6 +24,43 @@
       </button>
     </div>
 
+    <!-- Đoạn giới thiệu -->
+    <div class="container mb-5">
+      <div class="intro-section text-center">
+        <h2 class="fw-bold mb-3 text-primary">Chào mừng đến với NA Library</h2>
+        <p class="lead text-muted mb-4">
+          Hệ thống quản lý thư viện hiện đại, nơi bạn có thể dễ dàng tìm kiếm, mượn và quản lý sách một cách thuận tiện. 
+          Với kho sách đa dạng và công nghệ tiên tiến, chúng tôi mang đến trải nghiệm đọc sách tốt nhất cho bạn.
+        </p>
+        <div class="features-grid row g-4 mb-4">
+          <div class="col-md-4">
+            <div class="feature-item p-3">
+              <i class="bi bi-search feature-icon"></i>
+              <h5 class="mt-2">Tìm kiếm thông minh</h5>
+              <p class="text-muted mb-0">Tìm sách nhanh chóng theo tên, tác giả, thể loại</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature-item p-3">
+              <i class="bi bi-clock-history feature-icon"></i>
+              <h5 class="mt-2">Mượn trả dễ dàng</h5>
+              <p class="text-muted mb-0">Quy trình mượn trả sách đơn giản và tiện lợi</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="feature-item p-3">
+              <i class="bi bi-graph-up feature-icon"></i>
+              <h5 class="mt-2">Theo dõi lịch sử</h5>
+              <p class="text-muted mb-0">Quản lý lịch sử mượn sách chi tiết</p>
+            </div>
+          </div>
+        </div>
+        <router-link to="/docgia/about" class="btn btn-outline-primary btn-lg">
+          <i class="bi bi-info-circle me-2"></i>Tìm hiểu thêm về chúng tôi
+        </router-link>
+      </div>
+    </div>
+
     <!-- Danh sách sách -->
     <div class="container">
       <h3 class="mb-4 fw-bold text-primary">
@@ -136,6 +173,61 @@ function onBorrowCancel() {
   
   .carousel-img {
     height: 250px;
+  }
+}
+
+.intro-section {
+  padding: 2rem 0;
+}
+
+.feature-item {
+  background: var(--surface-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  height: 100%;
+  border: 1px solid var(--muted-200);
+}
+
+.feature-item:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow);
+  border-color: var(--primary-300);
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  color: var(--primary-600);
+  background: linear-gradient(135deg, var(--primary-100), var(--muted-100));
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.lead {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .intro-section {
+    padding: 1.5rem 0;
+  }
+  
+  .feature-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+  
+  .lead {
+    font-size: 1.1rem;
   }
 }
 </style>

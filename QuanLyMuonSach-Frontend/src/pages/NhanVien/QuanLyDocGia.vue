@@ -3,7 +3,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h3 class="mb-0">Quản lý Độc giả</h3>
       <div>
-        <button class="btn btn-primary me-2" @click="openAdd" :disabled="loading">Thêm Độc giả</button>
+        <button class="btn btn-primary me-2" @click="openAdd" >Thêm Độc giả</button>
       </div>
     </div>
 
@@ -31,8 +31,8 @@
             <td>{{ dg.diaChi || '—' }}</td>
             <td>{{ dg.dienThoai || '—' }}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary me-2" @click="openEdit(dg)">Sửa</button>
-              <button class="btn btn-sm btn-outline-danger" @click="handleDelete(dg)">Xóa</button>
+              <button class="btn btn-sm btn-accent me-2" @click="openEdit(dg)">Sửa</button>
+              <button class="btn btn-sm btn-danger" @click="handleDelete(dg)">Xóa</button>
             </td>
           </tr>
         </tbody>
