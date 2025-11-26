@@ -19,10 +19,10 @@ router.get("/:id", getSachById);
 
 // POST CREATE sách: multer parse FormData
 // 'hinhAnh' là tên field file trên FormData
-router.post("/", upload.single("file"), createSach);
+router.post("/", upload.single("hinhAnh"), createSach);
 
 // PUT UPDATE sách (có thể kèm file)
-router.put("/:id", upload.single("file"), updateSach);
+router.put("/:id", upload.single("hinhAnh"), updateSach);
 
 // DELETE
 router.delete("/:id", deleteSach);

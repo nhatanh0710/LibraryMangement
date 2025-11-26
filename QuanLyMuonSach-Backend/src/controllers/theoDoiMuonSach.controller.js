@@ -3,49 +3,83 @@ import TheoDoiMuonSach from "../models/theoDoiMuonSach.js";
 import DocGia from "../models/DocGia.js";
 import Sach from "../models/sach.js";
 import mongoose from "mongoose";
-// GET /api/theodoimuonsach - Lấy danh sách theo dõi mượn sách (có hỗ trợ tìm kiếm và phân trang)
+
+/** -----------------------------------------------------
+ *  HÀM HỖ TRỢ: Cập nhật tồn kho sách
+ *  change = +1 (cộng), -1 (trừ)
+ * ----------------------------------------------------*/
+async function updateStock(sachId, change) {
+  await Sach.findByIdAndUpdate(
+    sachId,
+    { $inc: { soQuyenConLai: change } },
+    { new: true }
+  );
+}
+
+/** -----------------------------------------------------
+ *  GET /api/theodoimuonsach
+ *  Lấy danh sách phiếu mượn
+ * ----------------------------------------------------*/
 export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
-  // ở đầu hàm
-  const { page = 1, limit = 10, search, maDocGia, maSach } = req.query;
+  const { page = 1, limit = 100, search, maDocGia, maSach } = req.query;
+
   const query = {};
 
-  // nếu truyền maDocGia dưới dạng id (ObjectId) thì convert
+  // Tìm theo mã độc giả (hỗ trợ ObjectId hoặc mã DGxxx)
   if (maDocGia) {
-    // nếu là ObjectId hợp lệ thì dùng ObjectId, nếu không dùng chuỗi (trường hợp bạn lưu mã DG001)
     if (mongoose.isValidObjectId(maDocGia)) {
-      query.maDocGia = mongoose.Types.ObjectId(maDocGia);
-    } else {
       query.maDocGia = maDocGia;
+    } else {
+      const dg = await DocGia.findOne({ maDocGia });
+      if (!dg)
+        return res.json({
+          success: true,
+          data: [],
+          meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+        });
+      query.maDocGia = dg._id;
     }
   }
 
-  // maSach tương tự
+  // Tìm theo mã sách
   if (maSach) {
     if (mongoose.isValidObjectId(maSach)) {
-      query.maSach = mongoose.Types.ObjectId(maSach);
-    } else {
       query.maSach = maSach;
+    } else {
+      const sach = await Sach.findOne({ maSach });
+      if (!sach)
+        return res.json({
+          success: true,
+          data: [],
+          meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+        });
+      query.maSach = sach._id;
     }
   }
 
-  // search fuzzy (nếu cần)
+  // Tìm kiếm fuzzy
   if (search) {
     const re = new RegExp(search, "i");
-    query.$or = [{ maDocGia: re }, { maSach: re }];
+    query.$or = [
+      { "maDocGia.maDocGia": re },
+      { "maSach.maSach": re },
+      { "maSach.tenSach": re },
+    ];
   }
-  // Xác định giới hạn và trang (ép kiểu sang số và đảm bảo >=1)
-  const perPage = Math.max(1, Number(limit));
-  const skip = (Math.max(1, Number(page)) - 1) * perPage;
+
+  const perPage = Number(limit);
+  const skip = (Number(page) - 1) * perPage;
+
   const [total, items] = await Promise.all([
     TheoDoiMuonSach.countDocuments(query),
     TheoDoiMuonSach.find(query)
       .populate("maDocGia", "maDocGia ten hoLot")
       .populate("maSach", "maSach tenSach tacGia")
       .skip(skip)
-      .limit(perPage) // Giới hạn số kết quả trả về
-      .sort({ createdAt: -1 }), // Sắp xếp theo ngày tạo mới nhất
+      .limit(perPage)
+      .sort({ createdAt: -1 }),
   ]);
-  // Trả kết quả về cho client
+
   res.json({
     success: true,
     data: items,
@@ -58,32 +92,40 @@ export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
   });
 });
 
-// GET /api/theodoimuonsach/:id - Lấy thông tin chi tiết 1 theo dõi mượn sách theo id
+/** -----------------------------------------------------
+ *  GET /api/theodoimuonsach/:id
+ * ----------------------------------------------------*/
 export const getTheoDoiMuonSachById = asyncHandler(async (req, res) => {
   const item = await TheoDoiMuonSach.findById(req.params.id);
   if (!item)
     return res
       .status(404)
-      .json({ success: false, message: "TheoDoiMuonSach không tồn tại" });
-  res.json({ success: true, data: item }); // Nếu có -> trả dữ liệu
+      .json({ success: false, message: "Phiếu mượn không tồn tại" });
+
+  res.json({ success: true, data: item });
 });
 
-// POST /api/theodoimuonsach - Thêm mới theo dõi mượn sách
+/** -----------------------------------------------------
+ *  POST /api/theodoimuonsach
+ *  Tạo phiếu mượn – không trừ kho ở bước này
+ * ----------------------------------------------------*/
 export const createTheoDoiMuonSach = asyncHandler(async (req, res) => {
   const { maDocGia, maSach, ngayMuon, ngayDuKienTra, ngayTra, trangThai } =
     req.body;
+
   if (!maDocGia || !maSach || !ngayMuon || !ngayDuKienTra || !trangThai) {
     return res
       .status(400)
       .json({ success: false, message: "Thiếu thông tin bắt buộc" });
   }
-  // Kiểm tra mã độc giả đã tồn tại chưa
-  const existingDocGia = await DocGia.findById(maDocGia);
-  if (!existingDocGia)
+
+  const checkDocGia = await DocGia.findById(maDocGia);
+  if (!checkDocGia)
     return res
       .status(400)
-      .json({ success: false, message: "Mã độc giả đã tồn tại" });
-  const newTheoDoiMuonSach = new TheoDoiMuonSach({
+      .json({ success: false, message: "Mã độc giả không hợp lệ" });
+
+  const newItem = await TheoDoiMuonSach.create({
     maDocGia,
     maSach,
     ngayMuon,
@@ -91,99 +133,102 @@ export const createTheoDoiMuonSach = asyncHandler(async (req, res) => {
     ngayTra,
     trangThai,
   });
-  await newTheoDoiMuonSach.save();
-  // populate ngay trước khi trả
-  const populated = await TheoDoiMuonSach.findById(newTheoDoiMuonSach._id)
+
+  const populated = await TheoDoiMuonSach.findById(newItem._id)
     .populate("maDocGia", "hoLot ten maDocGia")
     .populate("maSach", "tenSach maSach tacGia");
+
   res.status(201).json({ success: true, data: populated });
 });
 
-// PUT /api/theodoimuonsach/:id - Cập nhật thông tin theo dõi mượn sách
+/** -----------------------------------------------------
+ *  PUT /api/theodoimuonsach/:id
+ *  Cập nhật phiếu mượn + xử lý kho
+ * ----------------------------------------------------*/
 export const updateTheoDoiMuonSach = asyncHandler(async (req, res) => {
   const { trangThai, ngayTra } = req.body;
 
-  // Validation: Nếu trạng thái là "ĐÃ TRẢ" thì phải có ngày trả
-  if (trangThai === "ĐÃ TRẢ" && !ngayTra) {
-    return res.status(400).json({
-      success: false,
-      message: "Không thể đặt trạng thái 'ĐÃ TRẢ' khi chưa có ngày trả thực tế",
-    });
-  }
+  const old = await TheoDoiMuonSach.findById(req.params.id);
+  if (!old)
+    return res
+      .status(404)
+      .json({ success: false, message: "Phiếu mượn không tồn tại" });
 
-  // Validation: Nếu có ngày trả thì tự động set trạng thái thành "ĐÃ TRẢ"
-  if (ngayTra && trangThai !== "ĐÃ TRẢ") {
+  const oldStatus = old.trangThai;
+  let newStatus = trangThai;
+
+  // Nếu có ngày trả thì auto set trạng thái thành ĐÃ TRẢ
+  if (ngayTra && newStatus !== "ĐÃ TRẢ") {
+    newStatus = "ĐÃ TRẢ";
     req.body.trangThai = "ĐÃ TRẢ";
   }
 
-  const item = await TheoDoiMuonSach.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true, runValidators: true }
-  );
-
-  if (!item) {
-    return res.status(404).json({
-      success: false,
-      message: "TheoDoiMuonSach không tồn tại",
-    });
+  // XỬ LÝ TỒN KHO
+  if (oldStatus !== newStatus) {
+    if (oldStatus === "CHỜ DUYỆT" && newStatus === "ĐÃ DUYỆT") {
+      await updateStock(old.maSach, -1); // Trừ kho
+    }
+    if (oldStatus === "ĐÃ DUYỆT" && newStatus === "ĐÃ TRẢ") {
+      await updateStock(old.maSach, +1); // Trả lại kho
+    }
+    if (oldStatus === "ĐÃ DUYỆT" && newStatus === "CHỜ DUYỆT") {
+      await updateStock(old.maSach, +1); // Hủy duyệt
+    }
   }
 
-  res.json({ success: true, data: item });
+  const updated = await TheoDoiMuonSach.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+
+  res.json({ success: true, data: updated });
 });
 
-// DELETE /api/theodoimuonsach/:id - Xoá theo dõi mượn sách
+/** -----------------------------------------------------
+ *  DELETE /api/theodoimuonsach/:id
+ *  Xóa phiếu + trả kho nếu cần
+ * ----------------------------------------------------*/
 export const deleteTheoDoiMuonSach = asyncHandler(async (req, res) => {
   const id = req.params.id;
 
-  if (!mongoose.isValidObjectId(id)) {
-    return res.status(400).json({ success: false, message: "ID không hợp lệ" });
-  }
-
-  const theoDoi = await TheoDoiMuonSach.findById(id);
-  if (!theoDoi) {
+  const phieu = await TheoDoiMuonSach.findById(id);
+  if (!phieu)
     return res
       .status(404)
       .json({ success: false, message: "Không tìm thấy phiếu mượn" });
-  }
-  // Nếu là ĐỘC GIẢ
+
+  // Quyền của Độc giả
   if (req.userType === "DOCGIA") {
-    // chỉ xóa phiếu của chính họ
-    if (theoDoi.maDocGia.toString() !== req.user._id.toString()) {
+    if (phieu.maDocGia.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền xóa phiếu này",
+      });
+    }
+    if (phieu.trangThai !== "CHỜ DUYỆT") {
       return res
-        .status(403)
-        .json({ success: false, message: "Bạn không có quyền xóa phiếu này" });
+        .status(400)
+        .json({ success: false, message: "Chỉ được xóa phiếu CHỜ DUYỆT" });
     }
-    // chỉ cho xóa khi trạng thái là CHỜ DUYỆT
-    if (theoDoi.trangThai !== "CHỜ DUYỆT") {
+  }
+
+  // Quyền của Nhân viên
+  if (req.userType === "NHANVIEN") {
+    if (!["ĐÃ TRẢ", "CHỜ DUYỆT"].includes(phieu.trangThai)) {
       return res.status(400).json({
         success: false,
-        message: "Bạn chỉ có thể xóa khi phiếu ở trạng thái 'CHỜ DUYỆT'",
+        message: "Nhân viên chỉ được xóa phiếu 'ĐÃ TRẢ' hoặc 'CHỜ DUYỆT'",
       });
     }
   }
 
-  // Nếu là NHÂN VIÊN
-  else if (req.userType === "NHANVIEN") {
-    // chỉ cho xóa khi trạng thái là ĐÃ TRẢ
-    if (
-      (theoDoi.trangThai !== "ĐÃ TRẢ" || theoDoi.trangThai !== "CHỜ DUYỆT") &&
-      !theoDoi.ngayTra
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Nhân viên chỉ được xóa khi phiếu ở trạng thái 'ĐÃ TRẢ' hoặc 'CHỜ DUYỆT'",
-      });
-    }
+  // Hoàn kho nếu phiếu đã duyệt nhưng chưa trả
+  if (phieu.trangThai === "ĐÃ DUYỆT") {
+    await updateStock(phieu.maSach, +1);
   }
 
-  // Các loại người dùng khác thì cấm xóa
-  else {
-    return res
-      .status(403)
-      .json({ success: false, message: "Không có quyền thực hiện" });
-  }
-  // Xóa phiếu mượn
   await TheoDoiMuonSach.findByIdAndDelete(id);
+
   res.json({ success: true, message: "Xóa phiếu mượn thành công" });
 });

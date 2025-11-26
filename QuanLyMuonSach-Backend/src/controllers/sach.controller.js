@@ -11,7 +11,7 @@ const buildFileUrl = (req, filename) => {
 
 // GET /api/sach - Lấy danh sách sách (tìm kiếm + phân trang)
 export const getSachs = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 15, search } = req.query;
+  const { page = 1, limit = 100, search } = req.query;
   const query = {};
   if (search) {
     const re = new RegExp(String(search), "i");
