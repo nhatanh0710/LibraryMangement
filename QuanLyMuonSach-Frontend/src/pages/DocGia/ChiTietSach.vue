@@ -9,17 +9,33 @@
         <li class="breadcrumb-item">
           <router-link to="/sach" class="text-decoration-none">Danh sách sách</router-link>
         </li>
-        <li class="breadcrumb-item active">{{ book.tenSach || 'Chi tiết sách' }}</li>
+        <li class="breadcrumb-item active">{{ book?.tenSach || 'Chi tiết sách' }}</li>
       </ol>
     </nav>
 
-    <div class="row">
+    <!-- Loading state -->
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Đang tải...</span>
+      </div>
+      <p class="mt-2 text-muted">Đang tải thông tin sách...</p>
+    </div>
+
+    <!-- Error state -->
+    <div v-else-if="error" class="alert alert-danger text-center">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      {{ error }}
+      <button class="btn btn-sm btn-outline-primary ms-2" @click="loadBookDetails">Thử lại</button>
+    </div>
+
+    <!-- Main content khi đã có dữ liệu -->
+    <div v-else-if="book" class="row">
       <!-- Thông tin sách -->
-      <div class="col-lg-8">
+      <div class="col-lg-9">
         <div class="card book-detail-card">
           <div class="row g-0">
             <!-- Hình ảnh -->
-            <div class="col-md-4">
+            <div class="col-md-5">
               <div class="book-image-container">
                 <img 
                   :src="book.hinhAnh || '/images/book-placeholder.png'" 
@@ -37,7 +53,7 @@
             </div>
 
             <!-- Thông tin chi tiết -->
-            <div class="col-md-8">
+            <div class="col-md-7">
               <div class="card-body h-100 d-flex flex-column">
                 <!-- Header với title và mã sách -->
                 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -176,7 +192,7 @@
       </div>
 
       <!-- Sidebar thông tin bổ sung -->
-      <div class="col-lg-4">
+      <div class="col-lg-3">
         <div class="card info-sidebar">
           <div class="card-header">
             <h6 class="mb-0">
@@ -187,11 +203,11 @@
           <div class="card-body">
             <div class="info-item">
               <i class="bi bi-shield-check text-success me-2"></i>
-              <span>Đảm bảo chất lượng sách</span>
+              <span>Đảm bảo chất lượng</span>
             </div>
             <div class="info-item">
               <i class="bi bi-truck text-primary me-2"></i>
-              <span>Giao sách miễn phí trong thư viện</span>
+              <span>Giao sách miễn phí</span>
             </div>
             <div class="info-item">
               <i class="bi bi-headset text-info me-2"></i>
@@ -209,10 +225,10 @@
           </div>
           <div class="card-body">
             <button class="btn btn-outline-primary w-100 mb-2">
-              <i class="bi bi-heart me-2"></i>Thêm vào yêu thích
+              <i class="bi bi-heart me-2"></i>Yêu thích
             </button>
             <button class="btn btn-outline-secondary w-100">
-              <i class="bi bi-share me-2"></i>Chia sẻ sách
+              <i class="bi bi-share me-2"></i>Chia sẻ
             </button>
           </div>
         </div>
@@ -240,7 +256,6 @@ import api from '@/services/api'
 import TheoDoiMuonSachForm from '@/components/MuonSach/TheoDoiMuonSachForm.vue'
 import { useUserStore } from '@/stores/users'
 
-
 const route = useRoute()
 const router = useRouter()
 const bookId = route.params.id
@@ -251,6 +266,7 @@ const borrowHistory = ref([])
 const loading = ref(true)
 const loadingHistory = ref(false)
 const showBorrowForm = ref(false)
+const error = ref('')
 
 const canBorrow = computed(() => {
   return (book.value.soQuyenConLai ?? 0) > 0
@@ -293,16 +309,17 @@ function goBack() {
 // Load book details
 async function loadBookDetails() {
   loading.value = true
+  error.value = ''
   try {
     const response = await api.get(`/sach/${bookId}`)
     if (response.data.success) {
       book.value = response.data.data
     } else {
-      router.push('/docgia/trang-chu')
+      error.value = 'Không tìm thấy thông tin sách'
     }
-  } catch (error) {
-    console.error('Lỗi tải thông tin sách:', error)
-    router.push('/docgia/trang-chu')
+  } catch (err) {
+    console.error('Lỗi tải thông tin sách:', err)
+    error.value = 'Không thể tải thông tin sách. Vui lòng thử lại.'
   } finally {
     loading.value = false
   }
@@ -361,19 +378,19 @@ onMounted(() => {
 .book-image-container {
   position: relative;
   height: 100%;
-  min-height: 350px;
+  min-height: 400px;
   background: var(--muted-100);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.5rem;
 }
 
 .book-image {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  max-height: 300px;
+  max-height: 350px;
   border-radius: var(--radius);
 }
 
@@ -507,8 +524,9 @@ onMounted(() => {
 .info-item {
   display: flex;
   align-items: center;
-  padding: 0.75rem 0;
+  padding: 0.5rem 0;
   border-bottom: 1px solid var(--muted-200);
+  font-size: 0.9rem;
 }
 
 .info-item:last-child {
@@ -562,11 +580,23 @@ onMounted(() => {
     min-width: auto;
     margin-bottom: 0.25rem;
   }
+  
+  .book-image-container {
+    min-height: 400px;
+  }
+  
+  .book-image {
+    max-height: 380px;
+  }
 }
 
 @media (max-width: 576px) {
   .book-image-container {
     min-height: 250px;
+  }
+  
+  .book-image {
+    max-height: 220px;
   }
   
   .book-status-section {

@@ -8,16 +8,15 @@
       <router-view />
     </main>
 
-    <footer class="text-center py-3 mt-auto bg-light">
-      <div class="container">
-        <small class="text-muted">© 2025 Thư viện - Bản quyền thuộc về bạn</small>
-      </div>
-    </footer>
-  </div>
+    <div> 
+      <Footer />
+    </div>
+    </div>
 </template>
 
 <script setup>
 import Header from '@/components/Home/Header.vue'
+import Footer from '@/components/Home/Footer.vue'
 </script>
 
 <style scoped>

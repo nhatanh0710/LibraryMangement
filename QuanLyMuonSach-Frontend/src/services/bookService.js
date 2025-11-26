@@ -13,9 +13,17 @@ export const fetchBooks = (page = 1, limit = 10) =>
 
 export const fetchBook = (id) => unwrapPayload(api.get(`/sach/${id}`));
 export const createBook = (payload) =>
-  unwrapPayload(api.post("/sach", payload));
+  unwrapPayload(
+    api.post("/sach", payload, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+  );
 export const updateBook = (id, payload) =>
-  unwrapPayload(api.put(`/sach/${id}`, payload));
+  unwrapPayload(
+    api.put(`/sach/${id}`, payload, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+  );
 export const deleteBook = (id) => unwrapPayload(api.delete(`/sach/${id}`));
 export const searchBooks = (search = "", page = 1, limit = 20) => {
   const params = new URLSearchParams();

@@ -1,14 +1,37 @@
 <template>
   <div class="container py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <!-- Header với Search -->
+    <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-3">
       <h3 class="mb-0">Quản lý Độc giả</h3>
-      <div>
-        <button class="btn btn-primary me-2" @click="openAdd" >Thêm Độc giả</button>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <!-- Search Box -->
+        <SearchBox 
+          placeholder="Tìm theo mã, tên, địa chỉ, điện thoại..."
+          @search="handleSearch"
+        />
+        <button class="btn btn-primary" @click="openAdd">
+          <i class="bi bi-plus-circle me-1"></i>Thêm Độc giả
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Results Info -->
+    <div v-if="searchQuery" class="alert alert-info py-2 mb-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-search me-1"></i>
+          Kết quả tìm kiếm cho: "<strong>{{ searchQuery }}</strong>"
+          ({{ total }} kết quả)
+        </span>
+        <button class="btn btn-sm btn-outline-secondary" @click="clearSearch">
+          <i class="bi bi-x me-1"></i>Xóa tìm kiếm
+        </button>
       </div>
     </div>
 
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border" role="status"></div>
+      <p class="mt-2 text-muted">Đang tải...</p>
     </div>
 
     <div v-else>
@@ -38,14 +61,25 @@
         </tbody>
       </table>
 
-      <div v-else class="alert alert-info">Không có độc giả.</div>
+      <div v-else class="text-center py-5">
+        <div v-if="searchQuery" class="text-muted">
+          <i class="bi bi-search display-4 text-muted mb-3"></i>
+          <p>Không tìm thấy độc giả phù hợp với "<strong>{{ searchQuery }}</strong>"</p>
+          <button class="btn btn-outline-primary" @click="clearSearch">
+            Hiển thị tất cả độc giả
+          </button>
+        </div>
+        <div v-else class="alert alert-info">
+          Không có độc giả. Nhấn "Thêm Độc giả" để bắt đầu.
+        </div>
+      </div>
 
       <Pagination
         v-if="totalPages > 1"
         :page="page"
         :totalPages="totalPages"
         :limit="limit"
-        :maxButtons="5"
+        :totalItems="total"
         @update:page="changePage"
         @update:limit="changeLimit"
         @change="onPageChange"
@@ -65,6 +99,7 @@
 import { ref, onMounted } from 'vue'
 import DocGiaForm from '@/components/DocGiaForm.vue'
 import Pagination from '@/components/Home/Pagination.vue'
+import SearchBox from '@/components/SearchBox.vue'
 import loadData from '@/utils/loadData.js'
 import * as DocGiaService from '@/services/docGiaService.js'
 
@@ -73,22 +108,33 @@ const docGias = ref([])
 const loading = ref(false)
 const showForm = ref(false)
 const selected = ref(null)
+const searchQuery = ref('')
 
 const page = ref(1)
-const limit = ref(5)
+const limit = ref(10)
 const total = ref(0)
 const totalPages = ref(0)
 
-// load với loadData (truyền refs để loadData cập nhật)
+// Hàm load với search
 async function loadDocGias(p = 1) {
   try {
-    await loadData(
-      DocGiaService.fetchDocGias,
-      docGias,
-      p,
-      limit.value,
-      { loading, total, page, limit, totalPages }
-    )
+    if (searchQuery.value) {
+      // Sử dụng search service
+      const result = await DocGiaService.searchDocGias(searchQuery.value, p, limit.value)
+      docGias.value = result.data || []
+      total.value = result.meta?.total || 0
+      totalPages.value = Math.ceil(total.value / limit.value)
+      page.value = p
+    } else {
+      // Sử dụng loadData bình thường
+      await loadData(
+        DocGiaService.fetchDocGias,
+        docGias,
+        p,
+        limit.value,
+        { loading, total, page, limit, totalPages }
+      )
+    }
   } catch (err) {
     console.error('loadDocGias error:', err)
     alert(err?.response?.data?.message || 'Lỗi khi tải danh sách độc giả')
@@ -99,13 +145,26 @@ async function loadDocGias(p = 1) {
   }
 }
 
+// Search handlers
+function handleSearch(query) {
+  searchQuery.value = query
+  page.value = 1
+  loadDocGias(1)
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  page.value = 1
+  loadDocGias(1)
+}
+
 function openAdd() {
   selected.value = null
   showForm.value = true
 }
 
 function openEdit(d) {
-  selected.value = d
+  selected.value = JSON.parse(JSON.stringify(d)) // Clone an toàn
   showForm.value = true
 }
 
@@ -115,8 +174,13 @@ function closeForm() {
 }
 
 function onSaved(saved) {
-  if (!saved) { closeForm(); return }
-  // saved có thể là object trực tiếp (server unwrap)
+  if (!saved) {
+    // Reload để cập nhật danh sách
+    loadDocGias(page.value)
+    closeForm()
+    return
+  }
+
   const item = saved?.data ?? saved
   const idx = docGias.value.findIndex(x => x._id === item._id)
   if (idx !== -1) docGias.value.splice(idx, 1, item)
@@ -131,7 +195,10 @@ async function handleDelete(d) {
     alert('Độc giả không hợp lệ')
     return
   }
-  if (!confirm(`Bạn có chắc muốn xóa độc giả "${(d.hoLot || '') + ' ' + (d.ten || '')}"?`)) return
+  
+  const fullName = (d.hoLot || '') + ' ' + (d.ten || '')
+  if (!confirm(`Bạn có chắc muốn xóa độc giả "${fullName}"?`)) return
+  
   try {
     loading.value = true
     await DocGiaService.deleteDocGia(d._id)
@@ -153,7 +220,7 @@ function changePage(p) {
 }
 
 function changeLimit(l) {
-  const nl = Number(l) || 5
+  const nl = Number(l) || 10
   if (nl === limit.value) return
   limit.value = nl
   page.value = 1

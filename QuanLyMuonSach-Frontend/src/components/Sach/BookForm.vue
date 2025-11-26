@@ -210,6 +210,7 @@ watch(() => props.initial, (newInitial) => {
         form[key] = newInitial[key]
       }
     })
+    form.maNXB = newInitial.maNXB?._id || newInitial.maNXB || "";
     // Đảm bảo số quyển còn lại không vượt quá số quyển
     if (form.soQuyenConLai > form.soQuyen) {
       form.soQuyenConLai = form.soQuyen
@@ -301,7 +302,7 @@ async function submit() {
     
     // Thêm file nếu có
     if (selectedFile.value) {
-      formData.append('hinhAnhFile', selectedFile.value)
+      formData.append('hinhAnh', selectedFile.value)
     }
 
     let response

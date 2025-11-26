@@ -1,7 +1,8 @@
 <template>
   <div class="about-page">
     <!-- Header Section -->
-    <div class="hero-section">
+      <div class="hero-section">
+      <div class="hero-overlay"></div>
       <div class="container">
         <div class="row align-items-center">
           <div class="col-lg-6">
@@ -26,7 +27,7 @@
           </div>
           <div class="col-lg-6">
             <div class="hero-image">
-              <!-- <img src="/images/library-about.jpg" alt="Thư viện NA" class="img-fluid rounded-3" /> -->
+              <img src="@/images/favicon.ico.png" alt="Thư viện NA" class="img-fluid rounded-3" />
             </div>
           </div>
         </div>
@@ -145,17 +146,12 @@ const features = ref([
 
 const team = ref([
   {
-    name: 'Nguyễn Văn A',
+    name: 'Nguyễn Trương Nhật Anh',
     role: 'Founder & CEO',
     bio: 'Với 10 năm kinh nghiệm trong lĩnh vực công nghệ và thư viện số'
   },
   {
-    name: 'Trần Thị B',
-    role: 'CTO',
-    bio: 'Chuyên gia phát triển hệ thống và công nghệ thông tin'
-  },
-  {
-    name: 'Lê Văn C',
+    name: 'Trần Thị Hồng Yến',
     role: 'Product Manager',
     bio: 'Chịu trách nhiệm thiết kế trải nghiệm người dùng'
   }
@@ -170,7 +166,27 @@ const team = ref([
 /* Hero Section */
 .hero-section {
   padding: 4rem 0;
-  background: linear-gradient(135deg, var(--primary-50) 0%, var(--muted-100) 100%);
+  position: relative;
+  background-image: url('@/images/Banner04.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed; 
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.75); /* Lớp phủ trắng mờ */
+  backdrop-filter: blur(2px); /* Hiệu ứng blur */
+}
+
+.hero-section .container {
+  position: relative; /* Để nội dung nằm trên overlay */
+  z-index: 1;
 }
 
 .hero-title {
@@ -182,15 +198,9 @@ const team = ref([
 
 .hero-subtitle {
   font-size: 1.3rem;
-  color: var(--text-medium);
+  color: var(--text-dark);
   margin-bottom: 2rem;
   line-height: 1.6;
-}
-
-.hero-stats {
-  display: flex;
-  gap: 2rem;
-  margin-top: 2rem;
 }
 
 .stat-item {

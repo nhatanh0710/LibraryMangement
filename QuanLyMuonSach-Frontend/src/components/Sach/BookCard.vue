@@ -8,6 +8,12 @@
     <div class="book-info">
       <h6 class="book-title">{{ book.tenSach }}</h6>
       <p class="book-author">{{ book.nguonGoc_tacGia || 'Tác giả không rõ' }}</p>
+      
+      <!-- Thêm mô tả ngắn -->
+      <p v-if="book.moTa" class="book-description">
+        {{ truncateDescription(book.moTa) }}
+      </p>
+      
       <p class="book-price">{{ formatPrice(book.donGia) }}</p>
       
       <button class="borrow-btn" @click.stop="onBorrowClick" :disabled="book.soQuyenConLai === 0">
@@ -36,6 +42,15 @@ function onBorrowClick(event) {
 function formatPrice(v) {
   return v ? new Intl.NumberFormat('vi-VN').format(v) + ' ₫' : 'Miễn phí'
 }
+
+function truncateDescription(description) {
+  if (!description) return ''
+  // Giới hạn khoảng 60-80 ký tự, cắt ở chỗ gần nhất có dấu cách
+  if (description.length > 80) {
+    return description.substring(0, 80).split(' ').slice(0, -1).join(' ') + '...'
+  }
+  return description
+}
 </script>
 
 <style scoped>
@@ -58,14 +73,16 @@ function formatPrice(v) {
 
 .book-cover {
   position: relative;
-  height: 200px;
+  height: 220px; /* Tăng chiều cao ảnh */
   overflow: hidden;
 }
 
 .book-cover img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* Thay cover bằng contain để hiển thị toàn bộ ảnh */
+  background-color: #f8f9fa; /* Thêm nền cho phần trống */
+  padding: 8px; /* Thêm padding để ảnh không sát viền */
   transition: transform 0.3s ease;
 }
 
@@ -90,31 +107,44 @@ function formatPrice(v) {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.5rem; /* Thêm gap để các phần tử cách đều nhau */
 }
 
 .book-title {
   font-weight: 600;
   color: #1f2937;
-  margin-bottom: 0.5rem;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: 2.8em; /* Đảm bảo chiều cao cố định cho title */
 }
 
 .book-author {
   color: #6b7280;
   font-size: 0.875rem;
-  margin-bottom: 0.75rem;
   line-height: 1.4;
+  margin: 0;
+}
+
+.book-description {
+  color: #6b7280;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.4em; /* Đảm bảo chiều cao cố định cho description */
 }
 
 .book-price {
   color: #116466;
   font-weight: 700;
   font-size: 1rem;
-  margin-bottom: 1rem;
+  margin: 0;
 }
 
 .borrow-btn {
@@ -125,7 +155,8 @@ function formatPrice(v) {
   border-radius: 6px;
   font-weight: 500;
   transition: all 0.2s ease;
-  margin-top: auto;
+  margin-top: auto; /* Đẩy nút xuống dưới cùng */
+  width: 100%;
 }
 
 .borrow-btn:hover:not(:disabled) {
@@ -137,5 +168,16 @@ function formatPrice(v) {
   background: #9ca3af;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .book-cover {
+    height: 200px;
+  }
+  
+  .book-info {
+    padding: 0.75rem;
+  }
 }
 </style>

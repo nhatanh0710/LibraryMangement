@@ -1,9 +1,29 @@
 <template>
   <div class="container py-3">
-    <div class="d-flex justify-content-between mb-3 align-items-center">
+    <!-- Header với Search -->
+    <div class="d-flex justify-content-between mb-3 align-items-center flex-wrap gap-3">
       <h3 class="mb-0">Danh sách sách</h3>
-      <div>
-        <button class="btn btn-primary me-2" @click="openAdd" >Thêm sách mới</button>
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <!-- Search Box -->
+        <SearchBox 
+          placeholder="Tìm theo tên sách, mã sách, tác giả..."
+          @search="handleSearch"
+        />
+        <button class="btn btn-primary" @click="openAdd">Thêm sách mới</button>
+      </div>
+    </div>
+
+    <!-- Search Results Info -->
+    <div v-if="searchQuery" class="alert alert-info py-2 mb-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-search me-1"></i>
+          Kết quả tìm kiếm cho: "<strong>{{ searchQuery }}</strong>"
+          ({{ total }} kết quả)
+        </span>
+        <button class="btn btn-sm btn-outline-secondary" @click="clearSearch">
+          <i class="bi bi-x me-1"></i>Xóa tìm kiếm
+        </button>
       </div>
     </div>
 
@@ -38,7 +58,18 @@
         </tbody>
       </table>
 
-      <div v-else class="text-muted">Không có sách. Nhấn "Thêm sách" để bắt đầu.</div>
+      <div v-else class="text-center py-5">
+        <div v-if="searchQuery" class="text-muted">
+          <i class="bi bi-search display-4 text-muted mb-3"></i>
+          <p>Không tìm thấy sách phù hợp với "<strong>{{ searchQuery }}</strong>"</p>
+          <button class="btn btn-outline-primary" @click="clearSearch">
+            Hiển thị tất cả sách
+          </button>
+        </div>
+        <div v-else class="text-muted">
+          Không có sách. Nhấn "Thêm sách" để bắt đầu.
+        </div>
+      </div>
 
       <Pagination
         v-if="totalPages > 1"
@@ -65,7 +96,7 @@
 import { ref, onMounted } from 'vue'
 import BookForm from '@/components/Sach/BookForm.vue'
 import Pagination from '@/components/Home/Pagination.vue'
-import loadData from '@/utils/loadData.js'
+import SearchBox from '@/components/SearchBox.vue' // THÊM IMPORT NÀY
 import * as bookService from '@/services/bookService'
 
 // state + pagination refs
@@ -73,18 +104,33 @@ const books = ref([])
 const loading = ref(false)
 const showForm = ref(false)
 const selected = ref(null)
+const searchQuery = ref('')
 
 const page = ref(1)
 const limit = ref(10)
 const total = ref(0)
 const totalPages = ref(0)
 
-// load dùng loadData (truyền refs để loadData cập nhật loading/total/page/limit/totalPages)
+// Hàm load books với search
 async function loadBooks(p = 1) {
   try {
-    await loadData(bookService.fetchBooks, books, p, limit.value, {
-      loading, total, page, limit, totalPages
-    })
+    loading.value = true
+    
+    if (searchQuery.value) {
+      // Sử dụng search service
+      const result = await bookService.searchBooks(searchQuery.value, p, limit.value)
+      books.value = result.data || []
+      total.value = result.meta?.total || 0
+      totalPages.value = Math.ceil(total.value / limit.value)
+      page.value = p
+    } else {
+      // Sử dụng fetch bình thường
+      const result = await bookService.fetchBooks(p, limit.value)
+      books.value = result.data || []
+      total.value = result.meta?.total || 0
+      totalPages.value = Math.ceil(total.value / limit.value)
+      page.value = p
+    }
   } catch (err) {
     console.error('loadBooks error', err)
     alert(err?.response?.data?.message || 'Lỗi khi tải danh sách sách')
@@ -92,7 +138,22 @@ async function loadBooks(p = 1) {
     total.value = 0
     totalPages.value = 0
     page.value = 1
+  } finally {
+    loading.value = false
   }
+}
+
+// Search handlers
+function handleSearch(query) {
+  searchQuery.value = query
+  page.value = 1
+  loadBooks(1)
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  page.value = 1
+  loadBooks(1)
 }
 
 // lifecycle

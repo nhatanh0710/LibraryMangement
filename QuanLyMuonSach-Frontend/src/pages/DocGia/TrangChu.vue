@@ -1,6 +1,5 @@
 <template>
   <div class="user-home">
-
     <!-- Carousel -->
     <div id="bookCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
       <div class="carousel-inner" style="border-radius: var(--radius-xl);">
@@ -74,10 +73,25 @@
         <p class="mt-2 text-muted">Đang tải sách...</p>
       </div>
       
-      <div v-else class="row g-4">
-        <div class="col-sm-6 col-md-4 col-lg-3" v-for="book in featured" :key="book.maSach">
-          <BookCard :book="book" @borrow="openBorrow" />
+      <div v-else>
+        <div class="row g-4">
+          <div class="col-sm-6 col-md-4 col-lg-3" v-for="book in featured" :key="book.maSach">
+            <BookCard :book="book" @borrow="openBorrow" />
+          </div>
         </div>
+
+        <!-- Pagination -->
+        <Pagination
+          v-if="totalPages > 1"
+          :page="page"
+          :totalPages="totalPages"
+          :limit="limit"
+          :maxButtons="5"
+          @update:page="changePage"
+          @update:limit="changeLimit"
+          @change="onPageChange"
+          class="mt-4"
+        />
       </div>
     </div>
 
@@ -97,28 +111,34 @@
 </template>
 
 <script setup>
-// Script giữ nguyên
 import { ref, onMounted } from 'vue'
 import BookCard from '@/components/Sach/BookCard.vue'
 import TheoDoiMuonSachForm from '@/components/MuonSach/TheoDoiMuonSachForm.vue'
-import api from '@/services/api'
+import Pagination from '@/components/Home/Pagination.vue'
+import * as bookService from '@/services/bookService' // Sử dụng service
 import { useUserStore } from '@/stores/users'
 
 const userStore = useUserStore()
 const user = userStore.user || null
 
 const banners = ref([
-  { image: '/images/banner1.jpg', title: 'Harry Potter', author: 'J.K. Rowling' },
-  { image: '/images/banner2.jpg', title: 'Doraemon', author: 'Fujiko F. Fujio' },
-  { image: '/images/banner3.jpg', title: 'Sherlock Holmes', author: 'Arthur Conan Doyle' },
+  { image: new URL('@/images/Banner01.jpg', import.meta.url).href, title: 'Harry Potter', author: 'J.K. Rowling' },
+  { image: new URL('@/images/Banner02.jpg', import.meta.url).href, title: 'Thanh Xuân và Tuổi Trẻ' },
+  { image: new URL('@/images/Banner03.jpg', import.meta.url).href, title: 'Sherlock Holmes', author: 'Arthur Conan Doyle' },
 ])
 
+// State cho sách và pagination
 const featured = ref([])
 const loading = ref(false)
 const borrowModalOpen = ref(false)
 const selectedBook = ref(null)
-const page = ref(1)
 const saches = ref([])
+
+// Pagination state
+const page = ref(1)
+const limit = ref(12) // 12 sách mỗi trang
+const total = ref(0)
+const totalPages = ref(0)
 
 onMounted(async () => {
   await loadFeaturedBooks()
@@ -127,14 +147,55 @@ onMounted(async () => {
 async function loadFeaturedBooks() {
   loading.value = true
   try {
-    const res = await api.get(`/sach?page=${page.value}`)
-    featured.value = res.data?.data || []
+    // Sử dụng bookService thay vì api.get trực tiếp
+    const result = await bookService.fetchBooks(page.value, limit.value)
+    
+    console.log('Books result:', result) // Debug
+    
+    featured.value = result.data || []
     saches.value = featured.value
+    total.value = result.meta?.total || 0
+    
+    // Tính toán totalPages
+    if (total.value > 0 && limit.value > 0) {
+      totalPages.value = Math.ceil(total.value / limit.value)
+    } else {
+      totalPages.value = 0
+    }
+    
+    console.log('Pagination:', {
+      total: total.value,
+      limit: limit.value,
+      totalPages: totalPages.value,
+      booksCount: featured.value.length
+    })
+    
   } catch (err) {
     console.error('Lỗi tải sách:', err)
   } finally {
     loading.value = false
   }
+}
+
+// Pagination handlers
+function changePage(p) {
+  const np = Number(p) || 1
+  if (np === page.value) return
+  page.value = np
+  loadFeaturedBooks()
+}
+
+function changeLimit(l) {
+  const nl = Number(l) || 12
+  if (nl === limit.value) return
+  limit.value = nl
+  page.value = 1
+  loadFeaturedBooks()
+}
+
+function onPageChange({ page: p, limit: l } = {}) {
+  if (p) changePage(p)
+  if (l) changeLimit(l)
 }
 
 function openBorrow(book) {
@@ -161,9 +222,28 @@ function onBorrowCancel() {
   padding: var(--space-lg);
 }
 
+.carousel-inner {
+  height: 400px;
+  position: relative;
+}
+
+.carousel-item {
+  height: 100%;
+}
+
 .carousel-img {
-  height: 360px;
-  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #f8f9fa;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  filter: invert(1);
+  background-color: black;
+  border-radius: 50%;
+  padding: 10px;
 }
 
 @media (max-width: 768px) {
