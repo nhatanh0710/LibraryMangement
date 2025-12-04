@@ -110,44 +110,67 @@ export const createSach = asyncHandler(async (req, res) => {
   console.log("req.file:", req.file);
 });
 
-// PUT /api/sach/:id
+// PUT /api/sach/:id - FIX LỖI
 export const updateSach = asyncHandler(async (req, res) => {
   const item = await Sach.findById(req.params.id);
   if (!item)
-    return res
-      .status(404)
-      .json({ success: false, message: "Sách không tồn tại" });
+    return res.status(404).json({ success: false, message: "Sách không tồn tại" });
 
-  const { maSach, tenSach, donGia, soQuyen, namXuatBan, maNXB, nguonGoc_tacGia, moTa } =
-    req.body;
+  const { maSach, tenSach, donGia, soQuyen, soQuyenConLai, namXuatBan, maNXB, nguonGoc_tacGia, moTa } = req.body;
 
   // Nếu đổi mã sách, kiểm tra trùng
   if (maSach && maSach !== item.maSach) {
     const existingSach = await Sach.findOne({ maSach });
     if (existingSach)
-      return res
-        .status(400)
-        .json({ success: false, message: "Mã sách đã tồn tại" });
+      return res.status(400).json({ success: false, message: "Mã sách đã tồn tại" });
     item.maSach = maSach;
   }
 
   if (tenSach) item.tenSach = tenSach;
   if (donGia !== undefined) item.donGia = Number(donGia) || item.donGia;
-  if (soQuyen !== undefined) {
-    // chỉ cập nhật số lượng toàn bộ
-    const newSoQuyen = Number(soQuyen) || item.soQuyen;
-    // Nếu giảm tổng số lượng dưới số đang mượn -> có thể gây vấn đề; bạn có thể kiểm tra soQuyenConLai
-    if (newSoQuyen < item.soQuyen - (item.soQuyen - item.soQuyenConLai)) {
-      // logic phức tạp tuỳ quy tắc: ở đây ta prevent giảm nhỏ hơn số đang mượn
+  
+  // FIX: Cho phép cập nhật soQuyenConLai
+  if (soQuyenConLai !== undefined) {
+    const newSoQuyenConLai = Number(soQuyenConLai) || item.soQuyenConLai;
+    // Validate: soQuyenConLai không được > soQuyen
+    if (newSoQuyenConLai > item.soQuyen) {
       return res.status(400).json({
         success: false,
-        message: "Không thể giảm tổng số lượng nhỏ hơn số lượng đang mượn",
+        message: "Số quyển còn lại không được lớn hơn tổng số quyển"
       });
     }
-    item.soQuyen = newSoQuyen;
+    // Validate: soQuyenConLai không được < 0
+    if (newSoQuyenConLai < 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Số quyển còn lại không được âm"
+      });
+    }
+    item.soQuyenConLai = newSoQuyenConLai;
   }
-  if (namXuatBan !== undefined)
-    item.namXuatBan = Number(namXuatBan) || item.namXuatBan;
+
+  // Khi cập nhật tổng số quyển
+  if (soQuyen !== undefined) {
+    const newSoQuyen = Number(soQuyen) || item.soQuyen;
+    
+    // Validate: không cho giảm tổng số quyển nhỏ hơn số đang mượn
+    const currentlyBorrowed = item.soQuyen - item.soQuyenConLai;
+    if (newSoQuyen < currentlyBorrowed) {
+      return res.status(400).json({
+        success: false,
+        message: `Không thể giảm tổng số lượng xuống ${newSoQuyen}. Hiện có ${currentlyBorrowed} quyển đang được mượn`
+      });
+    }
+    
+    item.soQuyen = newSoQuyen;
+    
+    // Đồng bộ: nếu tổng số quyển thay đổi, điều chỉnh số quyển còn lại
+    if (item.soQuyenConLai > newSoQuyen) {
+      item.soQuyenConLai = newSoQuyen;
+    }
+  }
+
+  if (namXuatBan !== undefined) item.namXuatBan = Number(namXuatBan) || item.namXuatBan;
   if (maNXB) item.maNXB = maNXB;
   if (nguonGoc_tacGia) item.nguonGoc_tacGia = nguonGoc_tacGia;
   if (moTa) item.moTa = moTa;
@@ -155,11 +178,8 @@ export const updateSach = asyncHandler(async (req, res) => {
   // Xử lý file mới nếu có
   if (req.file && req.file.filename) {
     const newUrl = buildFileUrl(req, req.file.filename);
-    //xóa ảnh cũ
-
     item.hinhAnh = newUrl;
   } else if (req.body.hinhAnh) {
-    // nếu client gửi hinhAnh là URL, cập nhật
     item.hinhAnh = req.body.hinhAnh;
   }
 

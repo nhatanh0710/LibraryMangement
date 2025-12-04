@@ -37,7 +37,6 @@ export const registerDocGia = asyncHandler(async (req, res) => {
       maDocGia: docGia.maDocGia,
       hoLot: docGia.hoLot,
       ten: docGia.ten,
-      token: createToken(docGia._id, "DOCGIA"),
     },
   });
 });
