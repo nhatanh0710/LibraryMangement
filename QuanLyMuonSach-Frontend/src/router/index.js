@@ -15,7 +15,7 @@ import About from "@/pages/DocGia/About.vue";
 
 // ===== Auth pages =====
 import Login from "@/pages/auth/Login.vue";
-import RegisterStaff from "@/pages/auth/RegisterStaff.vue";
+import Register from "@/pages/auth/RegisterDocGia.vue";
 
 // ===== Admin pages =====
 import Dashboard from "@/pages/NhanVien/Dashboard.vue";
@@ -93,7 +93,7 @@ const routes = [
 
   // === Auth ===
   { path: "/login", name: "Login", component: Login },
-  { path: "/register-staff", name: "RegisterStaff", component: RegisterStaff },
+  { path: "/register", name: "Register", component: Register },
 
   // === 404 fallback ===
   { path: "/:pathMatch(.*)*", redirect: "/login" },

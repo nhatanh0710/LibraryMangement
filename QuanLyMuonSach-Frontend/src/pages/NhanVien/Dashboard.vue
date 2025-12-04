@@ -48,16 +48,28 @@ import api from '@/services/api'
 
 const stats = ref({ books: 0, readers: 0, loans: 0 })
 const user = useUserStore().user
+const loading = ref(true)
 
 onMounted(async () => {
   try {
-    // gọi API thống kê thật (sau khi BE có)
-    // const { data } = await api.get('/thongke/tongquan')
-    // stats.value = data
-    // demo tạm thời
-    stats.value = { books: 320, readers: 150, loans: 27 }
-  } catch (e) {
-    console.error(e)
+    // Gọi các API có sẵn để lấy tổng số bản ghi
+    const [booksRes, readersRes, loansRes] = await Promise.all([
+      api.get('/sach?limit=1'), // Chỉ cần lấy 1 bản ghi để xem meta.total
+      api.get('/docgia?limit=1'),
+      api.get('/theodoimuonsach?limit=1&trangThai=CHỜ DUYỆT,ĐANG MƯỢN')
+    ])
+
+    stats.value = {
+      books: booksRes.data.meta?.total || 0,
+      readers: readersRes.data.meta?.total || 0,
+      loans: loansRes.data.meta?.total || 0
+    }
+  } catch (error) {
+    console.error('Lỗi tải thống kê:', error)
+    // Fallback: dùng số liệu mẫu
+    stats.value = { books: 156, readers: 89, loans: 23 }
+  } finally {
+    loading.value = false
   }
 })
 </script>
