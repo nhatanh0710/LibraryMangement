@@ -31,12 +31,22 @@
           @update="(v) => (form.maSach = v)"
         />
 
-        <BorrowDatesSection
-          :role="role"
-          :is-edit="isEdit"
-          :initial="initial"
-          @update="updateDates"
-        />
+        <!-- Sửa BorrowDatesSection: 
+             - Tất cả đều có thể chỉnh ngày mượn
+             - User không thấy ngày trả
+             - Admin/Nhân viên thấy ngày trả
+        -->
+         <BorrowDatesSection
+        :role="role"
+        :is-edit="isEdit"
+        :initial="initial"
+        :show-return-date="role !== 'user'"
+        @update:ngayMuon="(v) => form.ngayMuon = v"
+        @update:ngayDuKienTra="(v) => form.ngayDuKienTra = v"
+        @update:ngayTra="(v) => form.ngayTra = v"
+        @update="updateDates"
+      />
+
 
         <BorrowStatusSection
           :role="role"
@@ -64,7 +74,7 @@
 </template>
 
 <script setup>
-// Phần script giữ nguyên hoàn toàn
+// Phần script giữ nguyên
 import { reactive, computed, ref, watch } from "vue";
 import BorrowerSection from "./BorrowerSection.vue";
 import BookSection from "./BookSection.vue";
@@ -246,8 +256,8 @@ function close() {
   background: white;
   border-radius: 12px;
   width: 600px;
-  max-width: 95vw;
-  max-height: 90vh;
+  max-width: 100vw;
+  max-height: 100vh;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
@@ -259,7 +269,7 @@ function close() {
 
 .modal-body {
   padding: 1.5rem;
-  max-height: 60vh;
+  max-height: 70vh;
   overflow-y: auto;
 }
 

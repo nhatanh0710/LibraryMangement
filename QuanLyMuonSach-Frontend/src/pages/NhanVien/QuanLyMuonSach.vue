@@ -33,9 +33,10 @@
             <td>{{ displaySach(r.maSach) }}</td>
             <td>{{ formatDate(r.ngayMuon) }}</td>
             <td>{{ formatDate(r.ngayDuKienTra) }}</td>
-            <td>{{ formatDate(r.ngayTra) }}</td>
+            <td>{{ displayNgayTra(r) }}</td>
+
             <td>
-              <span :class="r.trangThai === 'ĐÃ TRẢ' ? 'text-success' : 'text-warning'">
+              <span :class="r.trangThai === 'ĐÃ TRẢ' ||r.trangThai === 'TRẢ TRỄ' ? 'text-success' : 'text-warning'">
                 {{ r.trangThai }}
               </span>
             </td>
@@ -123,7 +124,7 @@ async function loadTheoDoi(p = 1) {
   }
 }
 
-// Load lookup lists
+// Load danh sách lookup (độc giả, sách)
 async function loadLookups() {
   try {
     loadingDocGias.value = true;
@@ -142,6 +143,22 @@ async function loadLookups() {
     loadingDocGias.value = false;
     loadingSaches.value = false;
   }
+}
+function displayNgayTra(r) {
+
+    if (r.treHan && r.soNgayTre > 0) {
+      return `— (Trễ ${r.soNgayTre} ngày, Phạt : ${r.tienPhat} VNĐ)`;
+    }
+    
+
+
+  const date = formatDate(r.ngayTra);
+
+  if (r.treHan && r.soNgayTre > 0) {
+    return `${date} (Trễ ${r.soNgayTre} ngày)`;
+  }
+
+  return date;
 }
 
 // --- Form open/close ---

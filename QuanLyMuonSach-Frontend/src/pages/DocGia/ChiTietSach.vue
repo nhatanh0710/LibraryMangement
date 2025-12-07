@@ -200,19 +200,17 @@
               Thông tin bổ sung
             </h6>
           </div>
+          
           <div class="card-body">
-            <div class="info-item">
-              <i class="bi bi-shield-check text-success me-2"></i>
-              <span>Đảm bảo chất lượng</span>
+            <div class="info-item  ">
+              <p class="mb-0 ">
+                📚 <strong>Quy định:</strong><br>
+                • Tối đa 5 sách/người<br>
+                • Thời hạn: tối đa 14 ngày<br>
+                • Phạt trễ: 2.000 VNĐ/ngày
+              </p>
             </div>
-            <div class="info-item">
-              <i class="bi bi-truck text-primary me-2"></i>
-              <span>Giao sách miễn phí</span>
-            </div>
-            <div class="info-item">
-              <i class="bi bi-headset text-info me-2"></i>
-              <span>Hỗ trợ 24/7</span>
-            </div>
+           
           </div>
         </div>
 

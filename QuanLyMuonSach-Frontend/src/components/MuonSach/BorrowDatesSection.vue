@@ -1,113 +1,132 @@
-<!-- Input chọn ngày mượn/trả trong form mượn sách -->
+<!-- BorrowDatesSection.vue -->
 <template>
-  <div class="row">
-
-    <!-- NGÀY MƯỢN -->
-    <div class="col-md-4 mb-3">
-      <label class="form-label">Ngày mượn</label>
-
-      <!-- User: chỉ xem, không được chỉnh -->
-      <input 
-        v-if="isUser" 
-        class="form-control bg-light" 
-        type="datetime-local" 
-        :value="ngayMuonLocal"
-        disabled
-      />
-
-      <!-- Admin: được chỉnh -->
-      <input 
-        v-else 
-        class="form-control"
-        type="datetime-local"
-        v-model="ngayMuonLocal"
-      />
+  <div class="dates-section mb-4">
+    <h6 class="section-title">
+      <i class="bi bi-calendar-date me-2"></i>
+      Thông tin ngày tháng
+    </h6>
+    
+    <div class="row g-3">
+      <!-- Ngày mượn - Cho tất cả chỉnh sửa -->
+      <div class="col-md-6">
+        <label class="form-label">Ngày mượn</label>
+        <input
+          type="date"
+          class="form-control"
+          :value="model.ngayMuon"
+          @input="handleNgayMuonChange($event.target.value)"
+          required
+        />
+      </div>
+      
+      <!-- Ngày dự kiến trả - Tính tự động -->
+      <div class="col-md-6">
+        <label class="form-label">Ngày dự kiến trả</label>
+        <div class="input-group">
+          <input
+            type="date"
+            class="form-control"
+            :value="model.ngayDuKienTra"
+            readonly
+            style="background-color: #f8f9fa;"
+          />
+    
+        </div>
+        <small class="text-muted d-block mt-1">
+          Được tính tự động dựa trên ngày mượn (14 ngày theo quy định)
+        </small>
+      </div>
+      
+      <!-- Ngày trả thực tế - Chỉ hiển thị cho admin/nhân viên -->
+      <div class="col-md-6" v-if="showReturnDate">
+        <label class="form-label">Ngày trả (thực tế)</label>
+        <input
+          type="date"
+          class="form-control"
+          :value="model.ngayTra"
+          @input="$emit('update:ngayTra', $event.target.value)"
+        />
+        <small class="text-muted">Chỉ điền khi sách đã được trả</small>
+      </div>
     </div>
-
-    <!-- NGÀY DỰ KIẾN TRẢ (ai cũng chỉnh được) -->
-    <div class="col-md-4 mb-3">
-      <label class="form-label">Ngày dự kiến trả</label>
-      <input 
-        class="form-control"
-        type="date"
-        v-model="ngayDuKienTraLocal"
-      />
-    </div>
-
-    <!-- NGÀY TRẢ (chỉ admin thấy + chỉnh) -->
-    <div class="col-md-4 mb-3" v-if="isAdmin">
-      <label class="form-label">Ngày trả</label>
-      <input
-        class="form-control"
-        type="datetime-local"
-        v-model="ngayTraLocal"
-      />
-    </div>
-
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { reactive, watch, computed } from 'vue'
 
 const props = defineProps({
-  role: String,       // admin hoặc user
-  isEdit: Boolean,    // đang chỉnh sửa hay không
-  initial: Object,    // dữ liệu ban đầu khi edit
-});
+  role: { type: String, default: 'user' },
+  isEdit: { type: Boolean, default: false },
+  initial: { type: Object, default: null },
+  showReturnDate: { type: Boolean, default: true }
+})
 
-const emit = defineEmits(["update"]);
+const emit = defineEmits(['update:ngayMuon', 'update:ngayDuKienTra', 'update:ngayTra', 'update'])
 
-const isAdmin = computed(() => props.role === "admin");
-const isUser = computed(() => props.role === "user");
+const model = reactive({
+  ngayMuon: '',
+  ngayDuKienTra: '',
+  ngayTra: ''
+})
 
-// Giá trị local để bind vào input
-const ngayMuonLocal = ref("");
-const ngayDuKienTraLocal = ref("");
-const ngayTraLocal = ref("");
-
-// Chuyển ISO → local input format
-function toLocalDateTime(val) {
-  if (!val) return "";
-  return new Date(val).toISOString().slice(0, 16);
+// Hàm tính ngày dự kiến trả = ngày mượn + 14 ngày
+function calculateDueDate(ngayMuon) {
+  if (!ngayMuon) return '';
+  
+  const date = new Date(ngayMuon);
+  date.setDate(date.getDate() + 14);
+  
+  // Format lại thành YYYY-MM-DD
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
 }
-function toLocalDate(val) {
-  if (!val) return "";
-  return new Date(val).toISOString().slice(0, 10);
+
+// Xử lý khi ngày mượn thay đổi
+function handleNgayMuonChange(value) {
+  model.ngayMuon = value;
+  model.ngayDuKienTra = calculateDueDate(value);
+  
+  // Emit cả hai giá trị lên parent
+  emit('update:ngayMuon', value);
+  emit('update:ngayDuKienTra', model.ngayDuKienTra);
+  emit('update', { ...model });
 }
 
-// Chuyển input format → ISO để gửi backend
-function toISO(s) {
-  return s ? new Date(s).toISOString() : null;
-}
-
-// Khi edit → load lại dữ liệu ban đầu
+// Theo dõi initial để cập nhật model
 watch(() => props.initial, (v) => {
-  if (!v) {
-    if (isUser.value) {
-      ngayMuonLocal.value = new Date().toISOString().slice(0,16); // mặc định ngày hiện tại
-    } else {
-      ngayMuonLocal.value = '';
+  if (v) {
+    model.ngayMuon = v.ngayMuon ? new Date(v.ngayMuon).toISOString().split('T')[0] : '';
+    model.ngayDuKienTra = v.ngayDuKienTra ? new Date(v.ngayDuKienTra).toISOString().split('T')[0] : '';
+    model.ngayTra = v.ngayTra ? new Date(v.ngayTra).toISOString().split('T')[0] : '';
+    
+    // Nếu chưa có ngày dự kiến trả và có ngày mượn, tính tự động
+    if (!model.ngayDuKienTra && model.ngayMuon) {
+      model.ngayDuKienTra = calculateDueDate(model.ngayMuon);
     }
-    ngayDuKienTraLocal.value = '';
-    ngayTraLocal.value = '';
-    return;
   }
-  ngayMuonLocal.value = toLocalDateTime(v.ngayMuon);
-  ngayDuKienTraLocal.value = toLocalDate(v.ngayDuKienTra);
-  ngayTraLocal.value = toLocalDateTime(v.ngayTra);
-}, { immediate: true });
+}, { immediate: true })
 
-
-// Mỗi lần input thay đổi → emit object chứa ISO date
-watch(
-  [ngayMuonLocal, ngayDuKienTraLocal, ngayTraLocal],
-  () => {
-    emit("update", {
-      ngayMuon: toISO(ngayMuonLocal.value),
-      ngayDuKienTra: toISO(ngayDuKienTraLocal.value),
-      ngayTra: toISO(ngayTraLocal.value),
-    });
-  }
-);
+// Theo dõi các thay đổi trong model để emit lên cha
+watch(model, (newVal) => {
+  emit('update', newVal)
+}, { deep: true })
 </script>
+
+<style scoped>
+.section-title {
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--primary-light);
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Định dạng cho input chỉ đọc */
+.readonly-input {
+  background-color: #f8f9fa !important;
+  cursor: not-allowed;
+}
+</style>

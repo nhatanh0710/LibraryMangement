@@ -27,8 +27,8 @@
         <div class="footer-links">
           <h6>Liên kết nhanh</h6>
           <router-link to="/" class="link">Trang chủ</router-link>
-          <router-link to="/books" class="link">Danh sách sách</router-link>
-          <router-link to="/about" class="link">Giới thiệu</router-link>
+          <router-link to="/docgia/Noi-Quy-Thu-Vien" class="link">Nội quy thư viện - mượn trả sách</router-link>
+          <router-link to="/docgia/about" class="link">Giới thiệu</router-link>
         </div>
 
         <!-- Social -->

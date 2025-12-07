@@ -75,10 +75,7 @@
         </button>
       </div>
 
-      <!-- 📚 Lịch sử mượn -->
-      <div class="history-section">
-        <BorrowHistory v-if="user?._id || user?.maDocGia" :maDocGia="user._id || user.maDocGia" />
-      </div>
+      
     </div>
   </div>
 

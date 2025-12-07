@@ -63,7 +63,7 @@
                 
                 <!-- Chỉ hiển thị lịch sử mượn sách cho độc giả -->
                 <li v-if="!isAdmin">
-                  <router-link class="dropdown-item" to="/docgia/lich-su-muon">
+                  <router-link class="dropdown-item" to="/docgia/lich-su-muon-sach">
                     <i class="bi bi-clock-history me-2"></i>Lịch sử mượn sách
                   </router-link>
                 </li>

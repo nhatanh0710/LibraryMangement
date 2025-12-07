@@ -26,6 +26,8 @@ import QuanLyNhanVien from "@/pages/NhanVien/QuanLyNhanVien.vue";
 import QuanLyMuonSach from "@/pages/NhanVien/QuanLyMuonSach.vue";
 import QuanLyNXB from "@/pages/NhanVien/QuanLyNXB.vue";
 import ChiTietNhanVien from "@/pages/NhanVien/ChiTietNhanVien.vue";
+import LichSuMuonSach from "../pages/DocGia/LichSuMuonSach.vue";
+import NoiQuy from "../pages/DocGia/NoiQuy.vue";
 
 // import ThongKe from "@/pages/NhanVien/ThongKe.vue";
 
@@ -55,7 +57,13 @@ const routes = [
           maSach: route.query.maSach, // hỗ trợ cả query param
         }),
       },
+      {
+        path: "lich-su-muon-sach",
+        name: "LichSuMuonSach",
+        component: LichSuMuonSach,
+      },
       { path: "about", name: "About", component: About },
+      { path: "Noi-Quy-Thu-Vien", name: "NoiQuyThuVien", component: NoiQuy },
       { path: "register", name: "RegisterDocGia", component: RegisterDocGia },
     ],
   },
@@ -130,6 +138,5 @@ router.beforeEach((to, from, next) => {
 
   next();
 });
-
 
 export default router;

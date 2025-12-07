@@ -1,87 +1,125 @@
 <template>
   <div class="borrow-history-section">
-    <div class="section-header">
-      <h6 class="section-title">
-        <i class="bi bi-clock-history"></i>
+    <!-- Header Section -->
+    <div class="section-header border-bottom p-3 p-lg-4 bg-light">
+      <h2 class="section-title m-0 text-dark">
+        <i class="bi bi-clock-history text-primary me-2"></i>
         Lịch sử mượn sách
-      </h6>
-    </div>
-    
-    <!-- Loading state -->
-    <div v-if="loading" class="loading-state">
-      <div class="spinner-container">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Đang tải...</span>
-        </div>
-        <p class="loading-text">Đang tải lịch sử mượn sách...</p>
-      </div>
+      </h2>
     </div>
 
-    <!-- Error state -->
-    <div v-else-if="error" class="error-state">
-      <div class="error-content">
-        <i class="bi bi-exclamation-triangle"></i>
-        <p>{{ error }}</p>
-        <button class="btn btn-sm btn-outline-primary" @click="loadBorrowHistory">
-          <i class="bi bi-arrow-clockwise"></i>
-          Thử lại
-        </button>
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state text-center py-5 bg-white">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
+      <p class="mt-3 text-secondary">Đang tải lịch sử mượn sách...</p>
     </div>
 
-    <!-- Empty state -->
-    <div v-else-if="items.length === 0" class="empty-state">
-      <div class="empty-content">
-        <i class="bi bi-inbox"></i>
-        <p class="empty-text">Chưa có lịch sử mượn sách</p>
-        <small class="text-muted">Các phiếu mượn sách sẽ xuất hiện ở đây</small>
+    <!-- Error State -->
+    <div v-else-if="error" class="error-state text-center py-5 bg-white">
+      <div class="alert alert-warning d-inline-flex align-items-center" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ error }}
       </div>
+      <button class="btn btn-outline-primary mt-3" @click="loadBorrowHistory">
+        <i class="bi bi-arrow-clockwise me-1"></i>
+        Thử lại
+      </button>
     </div>
 
-    <!-- Data table -->
-    <div v-else class="history-content">
-      <div class="table-container">
-        <table class="history-table">
-          <thead>
+    <!-- Empty State -->
+    <div v-else-if="items.length === 0" class="empty-state text-center py-5 bg-white">
+      <div class="empty-icon mb-3">
+        <i class="bi bi-journal-x text-secondary" style="font-size: 3rem;"></i>
+      </div>
+      <h5 class="text-secondary mb-2">Chưa có lịch sử mượn sách</h5>
+      <p class="text-secondary mb-0">Bạn chưa mượn sách nào từ thư viện.</p>
+    </div>
+
+    <!-- Data Table -->
+    <div v-else class="history-content p-3 p-lg-4 bg-white">
+      <!-- Responsive Table Container -->
+      <div class="table-responsive rounded border">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
             <tr>
-              <th class="book-info">Sách mượn</th>
-              <th class="date-info">Ngày mượn</th>
-              <th class="date-info">Hạn trả</th>
-              <th class="date-info">Ngày trả</th>
-              <th class="status-col">Trạng thái</th>
+              <th scope="col" class="ps-3 text-dark">Sách mượn</th>
+              <th scope="col" class="text-dark">Ngày mượn</th>
+              <th scope="col" class="text-dark">Hạn trả</th>
+              <th scope="col" class="text-dark">Ngày trả</th>
+              <th scope="col" class="text-dark">Trạng thái</th>
+              <th scope="col" class="pe-3 text-dark">Số ngày trễ & Phạt</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in items" :key="item._id" class="history-item">
-              <td class="book-info">
-                <div class="book-details">
-                  <div class="book-code">{{ item.maSach?.maSach || '—' }}</div>
-                  <div class="book-title">{{ item.maSach?.tenSach || '—' }}</div>
+            <tr v-for="item in items" :key="item._id" class="border-top">
+              <!-- Book Info -->
+              <td class="ps-3">
+                <div class="text-dark">
+                  <div class="text-muted small fw-medium">{{ item.maSach?.maSach || '—' }}</div>
+                  <div class="fw-semibold text-dark">{{ item.maSach?.tenSach || '—' }}</div>
+                  <div v-if="item.maSach?.tacGia" class="text-secondary small">
+                    {{ item.maSach.tacGia }}
+                  </div>
                 </div>
               </td>
-              <td class="date-info">
-                <div class="date-cell">
+
+              <!-- Dates -->
+              <td>
+                <div class="d-flex align-items-center gap-2 text-dark">
                   <i class="bi bi-calendar-plus"></i>
-                  {{ formatDate(item.ngayMuon) }}
+                  <span>{{ formatDate(item.ngayMuon) }}</span>
                 </div>
               </td>
-              <td class="date-info">
-                <div class="date-cell" :class="{ 'overdue': isOverdue(item) }">
+
+              <td>
+                <div :class="['d-flex align-items-center gap-2', { 'text-danger fw-semibold': isOverdue(item) }]">
                   <i class="bi bi-calendar-check"></i>
-                  {{ formatDate(item.ngayDuKienTra) }}
+                  <span :class="{ 'text-danger': isOverdue(item) }">
+                    {{ formatDate(item.ngayDuKienTra) }}
+                  </span>
                 </div>
               </td>
-              <td class="date-info">
-                <div class="date-cell" :class="{ 'returned': item.ngayTra }">
+
+              <td>
+                <div :class="['d-flex align-items-center gap-2', item.ngayTra ? 'text-success' : 'text-secondary']">
                   <i class="bi bi-calendar-event"></i>
-                  {{ formatDate(item.ngayTra) || '—' }}
+                  <span>{{ formatDate(item.ngayTra) || '—' }}</span>
                 </div>
               </td>
-              <td class="status-col">
-                <span :class="`status-badge ${getStatusClass(item.trangThai)}`">
+
+              <!-- Status -->
+              <td>
+                <span :class="`badge ${getStatusBadgeClass(item.trangThai)} d-inline-flex align-items-center gap-1`">
                   <i :class="getStatusIcon(item.trangThai)"></i>
                   {{ item.trangThai }}
                 </span>
+              </td>
+
+              <!-- Late Info -->
+              <td class="pe-3">
+                <div v-if="item.soNgayTre > 0" class="late-info">
+                  <div :class="['d-flex align-items-center gap-1 mb-1', item.ngayTra ? 'text-danger' : 'text-warning']">
+                    <i class="bi bi-clock-exclamation"></i>
+                    <span class="fw-medium">{{ item.soNgayTre }} ngày</span>
+                    <span v-if="!item.ngayTra" class="badge bg-danger ms-1">
+                      Đang trễ
+                    </span>
+                  </div>
+                  <div v-if="item.tienPhat > 0" class="text-danger d-flex align-items-center gap-1">
+                    <i class="bi bi-cash-coin"></i>
+                    <span class="fw-medium">{{ formatCurrency(item.tienPhat) }}</span>
+                  </div>
+                  <div v-else class="text-muted small d-flex align-items-center gap-1">
+                    <i class="bi bi-info-circle"></i>
+                    <span>Đang chờ tính phí</span>
+                  </div>
+                </div>
+                <div v-else class="text-success d-flex align-items-center gap-1">
+                  <i class="bi bi-check-circle"></i>
+                  <span>Không phạt</span>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -89,15 +127,17 @@
       </div>
 
       <!-- Pagination -->
-      <div v-if="meta && meta.totalPages > 1" class="pagination-section">
-        <div class="pagination-info">
-          <small class="text-muted">
+      <div v-if="meta && meta.totalPages > 1" 
+           class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 pt-3 border-top gap-3">
+        <div>
+          <small class="text-secondary">
             Hiển thị {{ getDisplayRange() }} của {{ meta.total }} phiếu mượn
           </small>
         </div>
-        <div class="pagination-controls">
+        
+        <div class="d-flex align-items-center gap-2">
           <button 
-            class="btn-pagination prev"
+            class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
             :disabled="currentPage <= 1"
             @click="changePage(currentPage - 1)"
           >
@@ -105,14 +145,14 @@
             Trước
           </button>
           
-          <div class="page-numbers">
-            <span class="current-page">{{ currentPage }}</span>
-            <span class="page-separator">/</span>
-            <span class="total-pages">{{ meta.totalPages }}</span>
+          <div class="px-3">
+            <span class="fw-semibold text-primary">{{ currentPage }}</span>
+            <span class="text-secondary mx-1">/</span>
+            <span class="text-secondary">{{ meta.totalPages }}</span>
           </div>
           
           <button 
-            class="btn-pagination next"
+            class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
             :disabled="currentPage >= meta.totalPages"
             @click="changePage(currentPage + 1)"
           >
@@ -145,8 +185,6 @@ async function loadBorrowHistory() {
   error.value = ''
   
   try {
-    console.log('🔍 Đang tìm phiếu mượn cho độc giả:', props.maDocGia)
-    
     const response = await api.get('/theodoimuonsach', {
       params: {
         maDocGia: props.maDocGia,
@@ -155,12 +193,9 @@ async function loadBorrowHistory() {
       }
     })
 
-    console.log('📊 Kết quả API:', response.data)
-    
     if (response.data.success) {
       items.value = response.data.data || []
       meta.value = response.data.meta
-      
       if (items.value.length === 0) {
         error.value = 'Không tìm thấy phiếu mượn nào'
       }
@@ -177,43 +212,52 @@ async function loadBorrowHistory() {
 
 // Format ngày
 function formatDate(dateString) {
-  if (!dateString) return '—'
-  try {
-    return new Date(dateString).toLocaleDateString('vi-VN')
-  } catch {
-    return dateString
+  if (!dateString) return null
+  try { 
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }) 
+  } catch { 
+    return dateString 
   }
 }
 
 // Kiểm tra quá hạn
 function isOverdue(item) {
-  if (item.trangThai === 'QUÁ HẠN') return true
-  if (item.trangThai === 'ĐANG MƯỢN' && item.ngayDuKienTra) {
-    return new Date(item.ngayDuKienTra) < new Date()
-  }
-  return false
+  return item.treHan === true || 
+         item.trangThai === 'HẾT HẠN' || 
+         item.trangThai === 'QUÁ HẠN' ||
+         item.trangThai === 'TRỄ HẠN'
 }
 
-// Class cho trạng thái
-function getStatusClass(status) {
+// Format tiền
+function formatCurrency(amount) {
+  if (!amount || amount <= 0) return '0 đ'
+  return new Intl.NumberFormat('vi-VN').format(amount) + ' đ'
+}
+
+// Bootstrap badge classes
+function getStatusBadgeClass(status) {
   const statusMap = {
-    'CHỜ DUYỆT': 'status-pending',
-    'ĐÃ DUYỆT': 'status-approved',
-    'ĐANG MƯỢN': 'status-borrowing',
-    'ĐÃ TRẢ': 'status-returned',
-    'QUÁ HẠN': 'status-overdue'
+    'CHỜ DUYỆT': 'bg-warning text-dark',
+    'ĐÃ DUYỆT': 'bg-primary text-white',
+    'ĐÃ TRẢ': 'bg-success text-white',
+    'HẾT HẠN': 'bg-danger text-white',
+    'TRẢ TRỄ': 'bg-success text-white'
   }
-  return statusMap[status] || 'status-default'
+  return statusMap[status] || 'bg-secondary text-white'
 }
 
-// Icon cho trạng thái
+// Bootstrap icons
 function getStatusIcon(status) {
   const iconMap = {
     'CHỜ DUYỆT': 'bi-clock',
     'ĐÃ DUYỆT': 'bi-check-circle',
-    'ĐANG MƯỢN': 'bi-book',
     'ĐÃ TRẢ': 'bi-check-lg',
-    'QUÁ HẠN': 'bi-exclamation-triangle'
+    'HẾT HẠN': 'bi-exclamation-triangle',
+    'TRẢ TRỄ': 'bi-exclamation-triangle',
   }
   return iconMap[status] || 'bi-question-circle'
 }
@@ -252,328 +296,117 @@ onMounted(() => {
 
 <style scoped>
 .borrow-history-section {
-  background: var(--surface-white);
-  border-radius: var(--radius-lg);
-  padding: 0;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #dee2e6;
 }
 
 .section-header {
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--muted-200);
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
 .section-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  color: var(--primary-800);
+  font-size: 1.25rem;
   font-weight: 600;
-  margin: 0;
-  font-size: 1.1rem;
+  color: #212529;
 }
 
-.section-title i {
-  color: var(--primary-700);
-}
-
-/* Loading state */
-.loading-state {
-  padding: var(--space-xl);
-  text-align: center;
-}
-
-.spinner-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space);
-}
-
-.loading-text {
-  color: var(--text-muted);
-  margin: 0;
-}
-
-/* Error state */
-.error-state {
-  padding: var(--space-xl);
-  text-align: center;
-}
-
-.error-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space);
-}
-
-.error-content i {
-  font-size: 2rem;
-  color: var(--warning-500);
-}
-
-.error-content p {
-  color: var(--text-medium);
-  margin: 0;
-}
-
-/* Empty state */
+/* Loading, Error, Empty states */
+.loading-state,
+.error-state,
 .empty-state {
-  padding: var(--space-xl);
-  text-align: center;
-}
-
-.empty-content i {
-  font-size: 3rem;
-  color: var(--muted-300);
-  margin-bottom: var(--space);
-}
-
-.empty-text {
-  color: var(--text-medium);
-  font-weight: 500;
-  margin-bottom: var(--space-xs);
-}
-
-/* Table styles */
-.history-content {
-  padding: var(--space-lg);
-}
-
-.table-container {
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1px solid var(--muted-200);
-}
-
-.history-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--surface-white);
-}
-
-.history-table th {
-  background: var(--muted-100);
-  padding: var(--space-md);
-  font-weight: 600;
-  color: var(--text-dark);
-  text-align: left;
-  font-size: 0.875rem;
-  border-bottom: 1px solid var(--muted-200);
-}
-
-.history-table td {
-  padding: var(--space-md);
-  border-bottom: 1px solid var(--muted-100);
-  vertical-align: top;
-}
-
-.history-item:last-child td {
-  border-bottom: none;
-}
-
-.history-item:hover {
-  background: var(--muted-50);
-}
-
-/* Column widths */
-.book-info { width: 30%; }
-.date-info { width: 18%; }
-.status-col { width: 16%; }
-
-/* Book info styles */
-.book-details {
-  line-height: 1.4;
-}
-
-.book-code {
-  font-family: monospace;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-bottom: 2px;
-}
-
-.book-title {
-  font-weight: 500;
-  color: var(--text-dark);
-  font-size: 0.9rem;
-}
-
-/* Date styles */
-.date-cell {
+  min-height: 200px;
   display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: var(--space-sm);
+  background: white;
+}
+
+/* Table improvements */
+.table th {
+  font-weight: 600;
   font-size: 0.875rem;
-  color: var(--text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #495057;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
 }
 
-.date-cell i {
-  color: var(--muted-300);
+.table td {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  vertical-align: middle;
+  border-color: #e9ecef;
+  color: #212529;
 }
 
-.date-cell.overdue {
-  color: var(--error-500);
-  font-weight: 500;
+.table-hover tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.05);
 }
 
-.date-cell.overdue i {
-  color: var(--error-500);
-}
-
-.date-cell.returned {
-  color: var(--success-500);
-}
-
-.date-cell.returned i {
-  color: var(--success-500);
-}
-
-/* Status badges */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: 4px 8px;
-  border-radius: var(--radius);
-  font-size: 0.75rem;
+/* Badge custom */
+.badge {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   white-space: nowrap;
+  border-radius: 6px;
 }
 
-.status-pending {
-  background: rgba(var(--warning-500-rgb), 0.1);
-  color: var(--warning-700);
-  border: 1px solid rgba(var(--warning-500-rgb), 0.3);
-}
-
-.status-approved {
-  background: rgba(var(--info-500-rgb), 0.1);
-  color: var(--info-700);
-  border: 1px solid rgba(var(--info-500-rgb), 0.3);
-}
-
-.status-borrowing {
-  background: rgba(var(--primary-500-rgb), 0.1);
-  color: var(--primary-700);
-  border: 1px solid rgba(var(--primary-500-rgb), 0.3);
-}
-
-.status-returned {
-  background: rgba(var(--success-500-rgb), 0.1);
-  color: var(--success-700);
-  border: 1px solid rgba(var(--success-500-rgb), 0.3);
-}
-
-.status-overdue {
-  background: rgba(var(--error-500-rgb), 0.1);
-  color: var(--error-700);
-  border: 1px solid rgba(var(--error-500-rgb), 0.3);
-}
-
-.status-default {
-  background: var(--muted-200);
-  color: var(--text-muted);
-  border: 1px solid var(--muted-300);
-}
-
-/* Pagination */
-.pagination-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: var(--space-lg);
-  padding-top: var(--space-md);
-  border-top: 1px solid var(--muted-200);
-}
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.btn-pagination {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: 6px 12px;
-  border: 1px solid var(--muted-300);
-  background: var(--surface-white);
-  color: var(--text-medium);
-  border-radius: var(--radius);
-  font-size: 0.875rem;
-  transition: all var(--transition-fast);
-}
-
-.btn-pagination:hover:not(:disabled) {
-  background: var(--primary-700);
-  color: white;
-  border-color: var(--primary-700);
-}
-
-.btn-pagination:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-numbers {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.875rem;
-}
-
-.current-page {
-  font-weight: 600;
-  color: var(--primary-700);
-}
-
-.total-pages {
-  color: var(--text-muted);
-}
-
-.page-separator {
-  color: var(--muted-300);
+/* Late info styling */
+.late-info .badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
+  .borrow-history-section {
+    border-radius: 8px;
+  }
+  
+  .table-responsive {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+  }
+  
+  .section-header {
+    padding: 1rem !important;
+  }
+  
   .history-content {
-    padding: var(--space);
+    padding: 1rem !important;
   }
   
-  .table-container {
-    overflow-x: auto;
-  }
-  
-  .history-table {
-    min-width: 600px;
-  }
-  
-  .pagination-section {
-    flex-direction: column;
-    gap: var(--space);
-    align-items: stretch;
-  }
-  
-  .pagination-controls {
-    justify-content: center;
+  .table th,
+  .table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
   }
 }
 
 @media (max-width: 576px) {
-  .section-header {
-    padding: var(--space);
+  .section-title {
+    font-size: 1.1rem;
   }
   
-  .history-content {
-    padding: var(--space-sm);
+  .badge {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
   }
   
-  .history-table th,
-  .history-table td {
-    padding: var(--space-sm);
+  .table th {
+    font-size: 0.75rem;
+  }
+  
+  .table td {
+    font-size: 0.8125rem;
   }
 }
 </style>
