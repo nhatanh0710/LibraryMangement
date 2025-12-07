@@ -15,6 +15,19 @@ async function updateStock(sachId, change) {
     { new: true }
   );
 }
+// Hàm tính số ngày trễ
+// Hàm tính số ngày trễ (giữ nguyên)
+function calculateLateDays(ngayDuKienTra, ngayTra = null) {
+  const due = new Date(ngayDuKienTra);
+  const checkDate = ngayTra ? new Date(ngayTra) : new Date();
+  
+  if (checkDate <= due) return 0;
+  
+  const diff = Math.ceil((checkDate - due) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? diff : 0;
+}
+
+
 
 /** -----------------------------------------------------
  *  GET /api/theodoimuonsach
@@ -25,7 +38,7 @@ export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
 
   const query = {};
 
-  // Tìm theo mã độc giả (hỗ trợ ObjectId hoặc mã DGxxx)
+  // Lọc độc giả
   if (maDocGia) {
     if (mongoose.isValidObjectId(maDocGia)) {
       query.maDocGia = maDocGia;
@@ -35,13 +48,13 @@ export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
         return res.json({
           success: true,
           data: [],
-          meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+          meta: { total: 0, page: 1, limit, totalPages: 0 },
         });
       query.maDocGia = dg._id;
     }
   }
 
-  // Tìm theo mã sách
+  // Lọc sách
   if (maSach) {
     if (mongoose.isValidObjectId(maSach)) {
       query.maSach = maSach;
@@ -51,13 +64,13 @@ export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
         return res.json({
           success: true,
           data: [],
-          meta: { total: 0, page: 1, limit: 10, totalPages: 0 },
+          meta: { total: 0, page: 1, limit, totalPages: 0 },
         });
       query.maSach = sach._id;
     }
   }
 
-  // Tìm kiếm fuzzy
+  // Search fuzzy
   if (search) {
     const re = new RegExp(search, "i");
     query.$or = [
@@ -70,15 +83,59 @@ export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
   const perPage = Number(limit);
   const skip = (Number(page) - 1) * perPage;
 
-  const [total, items] = await Promise.all([
-    TheoDoiMuonSach.countDocuments(query),
-    TheoDoiMuonSach.find(query)
-      .populate("maDocGia", "maDocGia ten hoLot")
-      .populate("maSach", "maSach tenSach tacGia")
-      .skip(skip)
-      .limit(perPage)
-      .sort({ createdAt: -1 }),
-  ]);
+  let items = await TheoDoiMuonSach.find(query)
+    .populate("maDocGia", "maDocGia ten hoLot")
+    .populate("maSach", "maSach tenSach tacGia")
+    .skip(skip)
+    .limit(perPage)
+    .sort({ createdAt: -1 });
+
+  // Trong phần GET /api/theodoimuonsach - SỬA LẠI ĐỂ TÍNH ĐÚNG
+  for (let item of items) {
+    let changed = false;
+
+    // LUÔN tính số ngày trễ mới nhất
+    let lateDays = 0;
+
+    if (item.ngayTra) {
+      // Đã trả: tính từ hạn trả đến ngày trả
+      lateDays = calculateLateDays(item.ngayDuKienTra, item.ngayTra);
+    } else {
+      // Chưa trả: tính từ hạn trả đến hôm nay
+      lateDays = calculateLateDays(item.ngayDuKienTra);
+    }
+
+    // Nếu số ngày trễ thay đổi
+    if (item.soNgayTre !== lateDays) {
+      item.soNgayTre = lateDays;
+      item.tienPhat = lateDays * 2000; // 2.000đ/ngày
+      changed = true;
+    }
+
+    // Tự động cập nhật trạng thái
+    if (lateDays > 0) {
+      if (!item.ngayTra && item.trangThai !== "HẾT HẠN") {
+        item.trangThai = "HẾT HẠN";
+        item.treHan = true;
+        changed = true;
+      } else if (item.ngayTra && item.trangThai !== "TRẢ TRỄ") {
+        item.trangThai = "TRẢ TRỄ";
+        item.treHan = true;
+        changed = true;
+      }
+    } else {
+      // Không trễ
+      item.treHan = false;
+      if (item.ngayTra && item.trangThai !== "ĐÃ TRẢ") {
+        item.trangThai = "ĐÃ TRẢ";
+        changed = true;
+      }
+    }
+
+    if (changed) await item.save();
+  }
+
+  const total = await TheoDoiMuonSach.countDocuments(query);
 
   res.json({
     success: true,
@@ -91,6 +148,7 @@ export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
     },
   });
 });
+
 
 /** -----------------------------------------------------
  *  GET /api/theodoimuonsach/:id
@@ -109,11 +167,11 @@ export const getTheoDoiMuonSachById = asyncHandler(async (req, res) => {
  *  POST /api/theodoimuonsach
  *  Tạo phiếu mượn – không trừ kho ở bước này
  * ----------------------------------------------------*/
+// TRONG createTheoDoiMuonSach controller
 export const createTheoDoiMuonSach = asyncHandler(async (req, res) => {
-  const { maDocGia, maSach, ngayMuon, ngayDuKienTra, ngayTra, trangThai } =
-    req.body;
+  const { maDocGia, maSach, ngayMuon } = req.body;
 
-  if (!maDocGia || !maSach || !ngayMuon || !ngayDuKienTra || !trangThai) {
+  if (!maDocGia || !maSach) {
     return res
       .status(400)
       .json({ success: false, message: "Thiếu thông tin bắt buộc" });
@@ -125,13 +183,17 @@ export const createTheoDoiMuonSach = asyncHandler(async (req, res) => {
       .status(400)
       .json({ success: false, message: "Mã độc giả không hợp lệ" });
 
+  // QUAN TRỌNG: Tự động tính ngày dự kiến trả = ngày mượn + 14 ngày
+  const ngayMuonDate = ngayMuon ? new Date(ngayMuon) : new Date();
+  const ngayDuKienTra = new Date(ngayMuonDate);
+  ngayDuKienTra.setDate(ngayMuonDate.getDate() + 14);
+
   const newItem = await TheoDoiMuonSach.create({
     maDocGia,
     maSach,
-    ngayMuon,
-    ngayDuKienTra,
-    ngayTra,
-    trangThai,
+    ngayMuon: ngayMuonDate,
+    ngayDuKienTra, // <-- Đã tính tự động
+    trangThai: "CHỜ DUYỆT",
   });
 
   const populated = await TheoDoiMuonSach.findById(newItem._id)
@@ -143,11 +205,9 @@ export const createTheoDoiMuonSach = asyncHandler(async (req, res) => {
 
 /** -----------------------------------------------------
  *  PUT /api/theodoimuonsach/:id
- *  Cập nhật phiếu mượn + xử lý kho
+ *  Cập nhật phiếu mượn + xử lý kho - TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI
  * ----------------------------------------------------*/
 export const updateTheoDoiMuonSach = asyncHandler(async (req, res) => {
-  const { trangThai, ngayTra } = req.body;
-
   const old = await TheoDoiMuonSach.findById(req.params.id);
   if (!old)
     return res
@@ -155,35 +215,57 @@ export const updateTheoDoiMuonSach = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Phiếu mượn không tồn tại" });
 
   const oldStatus = old.trangThai;
-  let newStatus = trangThai;
+  const updateData = { ...req.body };
 
-  // Nếu có ngày trả thì auto set trạng thái thành ĐÃ TRẢ
-  if (ngayTra && newStatus !== "ĐÃ TRẢ") {
-    newStatus = "ĐÃ TRẢ";
-    req.body.trangThai = "ĐÃ TRẢ";
+  // 1) NẾU CÓ NGÀY TRẢ → TỰ ĐỘNG CẬP NHẬT TRẠNG THÁI
+  if (updateData.ngayTra !== undefined) {
+    const ngayTra = updateData.ngayTra;
+    const lateDays = calculateLateDays(old.ngayDuKienTra, ngayTra);
+
+    // Xóa trạng thái từ frontend nếu có (để dùng logic tự động)
+    delete updateData.trangThai;
+
+    if (lateDays > 0) {
+      updateData.trangThai = "TRẢ TRỄ";
+      updateData.treHan = true;
+      updateData.soNgayTre = lateDays;
+      updateData.tienPhat = lateDays * 2000;
+    } else {
+      updateData.trangThai = "ĐÃ TRẢ";
+      updateData.treHan = false;
+      updateData.soNgayTre = 0;
+      updateData.tienPhat = 0;
+    }
+
+    // Trả sách thì phải cộng kho lại nếu trước đó đã duyệt
+    if (oldStatus === "ĐÃ DUYỆT") {
+      await updateStock(old.maSach, +1);
+    }
   }
-
-  // XỬ LÝ TỒN KHO
-  if (oldStatus !== newStatus) {
+  // 2) NẾU KHÔNG CÓ NGÀY TRẢ NHƯNG CÓ THAY ĐỔI TRẠNG THÁI
+  else if (updateData.trangThai) {
+    const newStatus = updateData.trangThai;
+    
+    // Xử lý kho khi thay đổi trạng thái
     if (oldStatus === "CHỜ DUYỆT" && newStatus === "ĐÃ DUYỆT") {
-      await updateStock(old.maSach, -1); // Trừ kho
+      await updateStock(old.maSach, -1);
+    } else if (oldStatus === "ĐÃ DUYỆT" && newStatus === "CHỜ DUYỆT") {
+      await updateStock(old.maSach, +1);
     }
-    if (oldStatus === "ĐÃ DUYỆT" && newStatus === "ĐÃ TRẢ") {
-      await updateStock(old.maSach, +1); // Trả lại kho
-    }
-    if (oldStatus === "ĐÃ DUYỆT" && newStatus === "CHỜ DUYỆT") {
-      await updateStock(old.maSach, +1); // Hủy duyệt
-    }
+    // Nếu từ ĐÃ DUYỆT sang HẾT HẠN thì không làm gì (vẫn giữ trạng thái đã trừ kho)
   }
 
+  // 3) CẬP NHẬT VÀ TRẢ VỀ
   const updated = await TheoDoiMuonSach.findByIdAndUpdate(
     req.params.id,
-    req.body,
+    updateData,
     { new: true }
-  );
+  ).populate("maDocGia", "hoLot ten maDocGia")
+   .populate("maSach", "tenSach maSach tacGia");
 
   res.json({ success: true, data: updated });
 });
+
 
 /** -----------------------------------------------------
  *  DELETE /api/theodoimuonsach/:id
