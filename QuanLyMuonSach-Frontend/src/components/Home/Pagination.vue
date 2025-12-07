@@ -4,12 +4,12 @@
       <!-- Pagination Controls - Căn giữa -->
       <div class="pagination-center">
         <!-- Page Size Selector -->
-        <div class="page-size-selector">
+        <!-- <div class="page-size-selector">
           <label class="form-label small text-muted mb-1">Số lượng / trang</label>
           <select class="form-select form-select-sm" v-model.number="pageSize" @change="emitLimit" style="width: 100px;">
             <option v-for="opt in [8, 12, 16, 20]" :key="opt" :value="opt">{{ opt }}</option>
           </select>
-        </div>
+        </div> -->
 
         <!-- Pagination Buttons -->
         <ul class="pagination pagination-sm mb-0">
@@ -90,9 +90,9 @@ const totalItems = computed(() => Math.max(0, totalItemsProp.value))
 const pageSize = ref(limitProp.value)
 const jumpPage = ref(pageProp.value)
 
-// Tính toán số item đang hiển thị
-const startItem = computed(() => ((currentPage.value - 1) * pageSize.value) + 1)
-const endItem = computed(() => Math.min(currentPage.value * pageSize.value, totalItems.value))
+// // Tính toán số item đang hiển thị
+// const startItem = computed(() => ((currentPage.value - 1) * pageSize.value) + 1)
+// const endItem = computed(() => Math.min(currentPage.value * pageSize.value, totalItems.value))
 
 // Đồng bộ khi prop thay đổi
 watch(limitProp, val => (pageSize.value = val))

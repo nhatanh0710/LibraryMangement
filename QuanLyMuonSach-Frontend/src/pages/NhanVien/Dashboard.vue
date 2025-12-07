@@ -67,7 +67,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Lỗi tải thống kê:', error)
     // Fallback: dùng số liệu mẫu
-    stats.value = { books: 156, readers: 89, loans: 23 }
+   stats.value = { books: 156, readers: 89, loans: 23 }
   } finally {
     loading.value = false
   }

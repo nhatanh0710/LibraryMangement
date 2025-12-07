@@ -16,6 +16,7 @@ import About from "@/pages/DocGia/About.vue";
 // ===== Auth pages =====
 import Login from "@/pages/auth/Login.vue";
 import Register from "@/pages/auth/RegisterDocGia.vue";
+import LoginStaff from "../pages/auth/LoginStaff.vue";
 
 // ===== Admin pages =====
 import Dashboard from "@/pages/NhanVien/Dashboard.vue";
@@ -25,6 +26,7 @@ import QuanLyNhanVien from "@/pages/NhanVien/QuanLyNhanVien.vue";
 import QuanLyMuonSach from "@/pages/NhanVien/QuanLyMuonSach.vue";
 import QuanLyNXB from "@/pages/NhanVien/QuanLyNXB.vue";
 import ChiTietNhanVien from "@/pages/NhanVien/ChiTietNhanVien.vue";
+
 // import ThongKe from "@/pages/NhanVien/ThongKe.vue";
 
 const routes = [
@@ -53,10 +55,7 @@ const routes = [
           maSach: route.query.maSach, // hỗ trợ cả query param
         }),
       },
-      {path: "about",
-        name: "About",
-        component: About,
-      },
+      { path: "about", name: "About", component: About },
       { path: "register", name: "RegisterDocGia", component: RegisterDocGia },
     ],
   },
@@ -94,6 +93,7 @@ const routes = [
   // === Auth ===
   { path: "/login", name: "Login", component: Login },
   { path: "/register", name: "Register", component: Register },
+  { path: "/loginStaff", name: "LoginStaff", component: LoginStaff },
 
   // === 404 fallback ===
   { path: "/:pathMatch(.*)*", redirect: "/login" },

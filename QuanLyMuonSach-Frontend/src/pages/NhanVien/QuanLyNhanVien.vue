@@ -124,7 +124,7 @@ function closeForm() {
   showForm.value = false;
 }
 
-function onSaved(saved) {
+async function onSaved(saved) {
   if (!saved) {
     closeForm();
     return;
@@ -137,8 +137,9 @@ function onSaved(saved) {
 
   // giữ độ dài không vượt limit
   if (nhanViens.value.length > limit.value) nhanViens.value.splice(limit.value);
-
+  
   closeForm();
+  await loadNhanViens(page.value);
 }
 
 async function handleDelete(nv) {

@@ -3,7 +3,7 @@
    <div class="login-left">
     <FormWrapper title="Đăng nhập">
     <form @submit.prevent="onSubmit">
-      <InputField v-model="account" label="Tài khoản (MSNV hoặc MSDG)" placeholder="Nhập MSNV hoặc MSDG" />
+      <InputField v-model="account" label="Tài khoản (MSNV hoặc MSDG)" placeholder="Nhập MSDG" />
       <InputField v-model="password" type="password" label="Mật khẩu" placeholder="Nhập mật khẩu" />
       <div v-if="error" class="alert alert-danger py-1 small">{{ error }}</div>
 
