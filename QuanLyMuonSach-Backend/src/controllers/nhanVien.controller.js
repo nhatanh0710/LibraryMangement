@@ -101,7 +101,7 @@ export const loginNhanVien = asyncHandler(async (req, res) => {
       .json({ success: false, message: "Mật khẩu không đúng" });
   // Tạo token
   const token = jwt.sign(
-    { id: nv._id, msnv: nv.msnv, chucVu: nv.chucVu },
+    { id: nv._id, msnv: nv.msnv, chucVu: nv.chucVu, type: "NHANVIEN" },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
   );
@@ -113,6 +113,7 @@ export const loginNhanVien = asyncHandler(async (req, res) => {
       id: nv._id,
       msnv: nv.msnv,
       hoTenNV: nv.hoTenNV,
+      type: "NHANVIEN",
       chucVu: nv.chucVu,
     },
   });

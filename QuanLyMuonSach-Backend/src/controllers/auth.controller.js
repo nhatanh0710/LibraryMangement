@@ -216,26 +216,26 @@ export const registerDocGia = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: safeUser });
 });
 
-export const registerStaff = asyncHandler(async (req, res) => {
-  const { msnv, hoTenNV, email, password, chucVu } = req.body;
-  if (!msnv || !hoTenNV || !email || !password || !chucVu) {
-    res.status(400);
-    throw new Error("Thiếu thông tin đăng ký");
-  }
-  const existing = await NhanVien.findOne({ $or: [{ msnv }, { email }] });
-  if (existing) {
-    res.status(400);
-    throw new Error("MSNV hoặc email đã tồn tại");
-  }
-  const hashed = await bcrypt.hash(password, 10);
-  const newStaff = await NhanVien.create({
-    msnv,
-    hoTenNV,
-    email,
-    password: hashed,
-    chucVu,
-  });
-  const safeUser = newStaff.toObject();
-  delete safeUser.password;
-  res.status(201).json({ success: true, data: safeUser });
-});
+// export const registerStaff = asyncHandler(async (req, res) => {
+//   const { msnv, hoTenNV, email, password, chucVu } = req.body;
+//   if (!msnv || !hoTenNV || !email || !password || !chucVu) {
+//     res.status(400);
+//     throw new Error("Thiếu thông tin đăng ký");
+//   }
+//   const existing = await NhanVien.findOne({ $or: [{ msnv }, { email }] });
+//   if (existing) {
+//     res.status(400);
+//     throw new Error("MSNV hoặc email đã tồn tại");
+//   }
+//   const hashed = await bcrypt.hash(password, 10);
+//   const newStaff = await NhanVien.create({
+//     msnv,
+//     hoTenNV,
+//     email,
+//     password: hashed,
+//     chucVu,
+//   });
+//   const safeUser = newStaff.toObject();
+//   delete safeUser.password;
+//   res.status(201).json({ success: true, data: safeUser });
+// });

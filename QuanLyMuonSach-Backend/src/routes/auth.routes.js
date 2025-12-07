@@ -4,7 +4,7 @@ import {
   refreshToken,
   logout,
   registerDocGia,
-  registerStaff,
+
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
@@ -16,6 +16,6 @@ router.post("/logout", logout);
 
 // đăng ký
 router.post("/register", registerDocGia);
-router.post("/register-staff", registerStaff);
+// router.post("/register-staff", registerStaff);
 
 export default router;
