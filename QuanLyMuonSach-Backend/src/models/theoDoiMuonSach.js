@@ -17,7 +17,7 @@ const muonSachSchema = new mongoose.Schema(
     ngayDuKienTra: { type: Date, required: true },
     trangThai: {
       type: String,
-      enum: ["ĐÃ DUYỆT", "ĐÃ TRẢ", "HẾT HẠN", "CHỜ DUYỆT", "TRẢ TRỄ"],
+      enum: ["ĐÃ DUYỆT", "ĐÃ TRẢ", "HẾT HẠN", "CHỜ DUYỆT", "TRẢ TRỄ", "MẤT SÁCH"],
       default: "CHỜ DUYỆT",
     },
     treHan: { type: Boolean, default: false },

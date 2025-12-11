@@ -20,14 +20,12 @@ async function updateStock(sachId, change) {
 function calculateLateDays(ngayDuKienTra, ngayTra = null) {
   const due = new Date(ngayDuKienTra);
   const checkDate = ngayTra ? new Date(ngayTra) : new Date();
-  
+
   if (checkDate <= due) return 0;
-  
+
   const diff = Math.ceil((checkDate - due) / (1000 * 60 * 60 * 24));
   return diff > 0 ? diff : 0;
 }
-
-
 
 /** -----------------------------------------------------
  *  GET /api/theodoimuonsach
@@ -149,7 +147,6 @@ export const getTheoDoiMuonSachs = asyncHandler(async (req, res) => {
   });
 });
 
-
 /** -----------------------------------------------------
  *  GET /api/theodoimuonsach/:id
  * ----------------------------------------------------*/
@@ -223,7 +220,7 @@ export const updateTheoDoiMuonSach = asyncHandler(async (req, res) => {
     const lateDays = calculateLateDays(old.ngayDuKienTra, ngayTra);
 
     // Xóa trạng thái từ frontend nếu có (để dùng logic tự động)
-    delete updateData.trangThai;
+    updateData.trangThai;
 
     if (lateDays > 0) {
       updateData.trangThai = "TRẢ TRỄ";
@@ -245,7 +242,7 @@ export const updateTheoDoiMuonSach = asyncHandler(async (req, res) => {
   // 2) NẾU KHÔNG CÓ NGÀY TRẢ NHƯNG CÓ THAY ĐỔI TRẠNG THÁI
   else if (updateData.trangThai) {
     const newStatus = updateData.trangThai;
-    
+
     // Xử lý kho khi thay đổi trạng thái
     if (oldStatus === "CHỜ DUYỆT" && newStatus === "ĐÃ DUYỆT") {
       await updateStock(old.maSach, -1);
@@ -260,12 +257,12 @@ export const updateTheoDoiMuonSach = asyncHandler(async (req, res) => {
     req.params.id,
     updateData,
     { new: true }
-  ).populate("maDocGia", "hoLot ten maDocGia")
-   .populate("maSach", "tenSach maSach tacGia");
+  )
+    .populate("maDocGia", "hoLot ten maDocGia")
+    .populate("maSach", "tenSach maSach tacGia");
 
   res.json({ success: true, data: updated });
 });
-
 
 /** -----------------------------------------------------
  *  DELETE /api/theodoimuonsach/:id
